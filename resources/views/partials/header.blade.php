@@ -27,12 +27,14 @@
             </div>
 
             <div class="user-dropdown" id="userDropdown">
-                <button id="logoutBtn">Đăng xuất</button>
+                <button id="changePasswordBtn" class="dropdown-item">Đổi mật khẩu</button>
+                <button id="logoutBtn" class="dropdown-item logout">Đăng xuất</button>
             </div>
         </div>
         @else
         <button class="btn-login" id="openLoginModal">Đăng nhập</button>
         @endif
+        @include('partials.change-password-modal')
 
     </div>
 </header>

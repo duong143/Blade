@@ -50,11 +50,78 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (res.success) location.reload();
                 });
         }
+
+        // ===== CHANGE PASSWORD =====
+        if (e.target.id === "changePasswordBtn") {
+            document.getElementById("changePasswordModal")
+                ?.classList.add("active");
+        }
+        // ===== CLOSE CHANGE PASSWORD MODAL =====
+        if (e.target.id === "closeChangePasswordModal") {
+            document
+                .getElementById("changePasswordModal")
+                ?.classList.remove("active");
+        }
+
+
+        // ===== SUBMIT CHANGE PASSWORD =====
+        if (e.target.id === "submitChangePassword") {
+
+            const current = document.getElementById("currentPassword")?.value.trim();
+            const newPass = document.getElementById("newPassword")?.value.trim();
+            const confirm = document.getElementById("confirmNewPassword")?.value.trim();
+
+            if (!current || !newPass || !confirm) {
+                alert("Vui lòng nhập đầy đủ thông tin");
+                return;
+            }
+
+            if (newPass !== confirm) {
+                alert("Mật khẩu xác nhận không khớp");
+                return;
+            }
+
+            fetch("/change-password", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document
+                        .querySelector('meta[name="csrf-token"]')
+                        .content
+                },
+                body: JSON.stringify({
+                    current_password: current,
+                    new_password: newPass,
+                    new_password_confirmation: confirm
+                })
+            })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        alert(res.message);
+
+                        // reset form
+                        document.getElementById("currentPassword").value = "";
+                        document.getElementById("newPassword").value = "";
+                        document.getElementById("confirmNewPassword").value = "";
+
+                        // đóng modal
+                        document
+                            .getElementById("changePasswordModal")
+                            ?.classList.remove("active");
+                    } else {
+                        alert(res.message || "Đổi mật khẩu thất bại");
+                    }
+                })
+                .catch(() => alert("Có lỗi xảy ra"));
+        }
+
+
     });
 
     // ===== LOGIN SUBMIT =====
     document.querySelector("#loginModal .login-submit")
-        ?.addEventListener("click", () => {
+        ?.addEventListener("click", (e) => {
 
             const phone = document.querySelector("#loginModal .phone-input input")?.value.trim();
             const password = document.querySelector("#loginModal .password-input input")?.value.trim();
@@ -82,7 +149,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     // ===== REGISTER SUBMIT =====
     document.querySelector("#registerModal .login-submit")
-        ?.addEventListener("click", () => {
+        ?.addEventListener("click", (e) => {
 
             const phone = document.querySelector(
                 "#registerModal .phone-input input"
@@ -124,5 +191,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 })
                 .catch(() => alert("Có lỗi xảy ra"));
         });
+
 
 });

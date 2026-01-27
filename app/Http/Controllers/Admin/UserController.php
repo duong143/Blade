@@ -9,17 +9,20 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    // LIST
     public function index()
     {
         $users = User::latest()->get();
         return view('admin.users.index', compact('users'));
     }
 
+    // FORM CREATE
     public function create()
     {
         return view('admin.users.create');
     }
 
+    // STORE
     public function store(Request $request)
     {
         $request->validate([
@@ -41,6 +44,7 @@ class UserController extends Controller
         return view('admin.users.edit', compact('user'));
     }
 
+    // UPDATE
     public function update(Request $request, User $user)
     {
         $request->validate([
@@ -62,6 +66,7 @@ class UserController extends Controller
             
     }
 
+    // DELETE
     public function destroy(User $user)
     {
         $user->delete();
