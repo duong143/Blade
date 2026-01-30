@@ -1,38 +1,68 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Thêm User</title>
-</head>
-<body>
+@extends('admin.layout')
 
-<h2>THÊM USER</h2>
+@section('content')
+<div class="card card-primary">
+    <div class="card-header">
+        <h3 class="card-title">Thêm user mới</h3>
+    </div>
 
-<a href="{{ route('admin.users.index') }}">⬅ Quay lại</a>
+    <form method="POST" action="{{ route('admin.users.store') }}">
+        @csrf
 
-@if ($errors->any())
-    <ul style="color:red;">
-        @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-        @endforeach
-    </ul>
-@endif
+        <div class="card-body">
+            {{-- Hiển thị lỗi validate --}}
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-<form method="POST" action="{{ route('admin.users.store') }}">
-    @csrf
+            <div class="form-group">
+                <label>Số điện thoại</label>
+                <input type="text"
+                       name="phone"
+                       class="form-control"
+                       value="{{ old('phone') }}"
+                       placeholder="Nhập số điện thoại"
+                       required>
+            </div>
 
-    <p>
-        <label>Số điện thoại</label><br>
-        <input type="text" name="phone">
-    </p>
+            <div class="form-group">
+                <label>Mật khẩu</label>
+                <input type="password"
+                       name="password"
+                       class="form-control"
+                       placeholder="Nhập mật khẩu"
+                       required>
+            </div>
 
-    <p>
-        <label>Mật khẩu</label><br>
-        <input type="password" name="password">
-    </p>
+            <div class="form-group">
+                <label>Quyền</label>
+                <select name="is_admin" class="form-control">
+                    <option value="0" {{ old('is_admin') == '0' ? 'selected' : '' }}>
+                        User
+                    </option>
+                    <option value="1" {{ old('is_admin') == '1' ? 'selected' : '' }}>
+                        Admin
+                    </option>
+                </select>
+            </div>
+        </div>
 
-    <button>Tạo user</button>
-</form>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Tạo user
+            </button>
 
-</body>
-</html>
+            <a href="{{ route('admin.users.index') }}"
+               class="btn btn-secondary">
+                Quay lại
+            </a>
+        </div>
+    </form>
+</div>
+@endsection

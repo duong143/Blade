@@ -4,7 +4,26 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 
+
+Route::get('/admin/login', [AdminAuthController::class, 'showLogin']);
+Route::post('/admin/login', [AdminAuthController::class, 'login']);
+Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
+    ->name('admin.logout');
+
+
+Route::prefix('admin')
+    ->middleware('admin')
+    ->group(function () {
+
+        Route::get('/', [AdminController::class, 'index'])
+            ->name('admin.dashboard');
+
+        Route::resource('users', UserController::class)
+            ->names('admin.users');
+    });
 
 Route::get('/', function () {
     return view('home');
@@ -21,12 +40,6 @@ Route::post('/logout', function () {
     return response()->json([
         'success' => true
     ]);
-});
-
-
-Route::prefix('admin')->group(function () {
-    Route::resource('users', UserController::class)
-        ->names('admin.users');
 });
 
 Route::post('/change-password', function (Illuminate\Http\Request $request) {

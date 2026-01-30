@@ -32,8 +32,10 @@ class UserController extends Controller
 
         User::create([
             'phone' => $request->phone,
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($request->password),
+            'is_admin' => $request->is_admin ?? 0
         ]);
+
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Tạo user thành công');
@@ -53,7 +55,12 @@ class UserController extends Controller
             'password' => 'nullable|min:6'
         ]);
 
-        $data = ['phone' => $request->phone, 'name' => $request->name];
+        $data = [
+            'phone' => $request->phone,
+            'name' => $request->name,
+            'is_admin' => $request->is_admin ?? $user->is_admin
+        ];
+
 
         if ($request->password) {
             $data['password'] = Hash::make($request->password);
@@ -63,7 +70,6 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Cập nhật thành công');
-            
     }
 
     // DELETE
