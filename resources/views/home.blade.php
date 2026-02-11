@@ -12,32 +12,38 @@
     <div class="container">
         <div class="banner-wrapper">
 
-            <button class="banner-btn prev"><img src="{{ asset('images/mũi tên.png') }}" alt=""></button>
+            <button class="banner-btn prev">
+                <img src="{{ asset('images/mũi tên.png') }}" alt="">
+            </button>
 
             <div class="banner-slider">
                 <div class="banner-track">
 
+                    @if(isset($mainBanners) && $mainBanners->count())
+                    @foreach($mainBanners as $banner)
+                    <div class="banner-slide">
+                        <img
+                            src="{{ asset('storage/' . $banner->image) }}"
+                            alt="{{ $banner->title }}">
+                    </div>
+                    @endforeach
+                    @else
+                    {{-- Fallback --}}
                     <div class="banner-slide">
                         <img src="{{ asset('images/anh1.png') }}" alt="">
                     </div>
-
-                    <div class="banner-slide">
-                        <img src="{{ asset('images/anh1.png') }}" alt="">
-                    </div>
-
-                    <div class="banner-slide">
-                        <img src="{{ asset('images/anh1.png') }}" alt="">
-                    </div>
+                    @endif
 
                 </div>
             </div>
 
-            <button class="banner-btn next"><img src="{{ asset('images/mũi tên1.png') }}" alt=""></button>
+            <button class="banner-btn next">
+                <img src="{{ asset('images/mũi tên1.png') }}" alt="">
+            </button>
 
         </div>
     </div>
 </section>
-
 
 <!-- tab -->
 <section class="search-box">
@@ -247,33 +253,38 @@
 <section class="promo">
     <div class="container">
         <h2>Ưu đãi đặc biệt</h2>
-        <p>Chúng tôi luôn cập nhật những ưu đãi mới nhất phù hợp với bạn. Thoả sức vi vu đến các địa điểm nổi tiếng
-            khắp nơi trên thế giới.</p>
+        <p>
+            Chúng tôi luôn cập nhật những ưu đãi mới nhất phù hợp với bạn.
+            Thoả sức vi vu đến các địa điểm nổi tiếng khắp nơi trên thế giới.
+        </p>
+
         <div class="promo-grid">
+
+            @if(isset($smallBanners) && $smallBanners->count())
+            @foreach($smallBanners as $banner)
             <div class="promo-item">
+                <img
+                    src="{{ asset('storage/'.$banner->image) }}"
+                    alt="{{ $banner->title }}">
+            </div>
+            @endforeach
+            @else
+            {{-- fallback nếu chưa có data --}}
+            @for($i = 0; $i < 6; $i++)
+                <div class="promo-item">
                 <img src="{{ asset('images/anh1.jpg') }}">
-            </div>
-            <div class="promo-item">
-                <img src="{{ asset('images/anh1.jpg') }}">
-            </div>
-            <div class="promo-item">
-                <img src="{{ asset('images/anh1.jpg') }}">
-            </div>
-            <div class="promo-item">
-                <img src="{{ asset('images/anh1.jpg') }}">
-            </div>
-            <div class="promo-item">
-                <img src="{{ asset('images/anh1.jpg') }}">
-            </div>
-            <div class="promo-item">
-                <img src="{{ asset('images/anh1.jpg') }}">
-            </div>
-            <div class="promo-btn-wrap">
-                <button class="btn-promo">Xem tất cả</button>
-            </div>
         </div>
+        @endfor
+        @endif
+
+        <div class="promo-btn-wrap">
+            <button class="btn-promo">Xem tất cả</button>
+        </div>
+
+    </div>
     </div>
 </section>
+
 
 <!-- info strip -->
 <!-- TIN TỨC -->
@@ -282,24 +293,26 @@
         <h2>Tin tức du lịch</h2>
 
         <div class="news-grid">
+
+            @if(isset($newsList) && $newsList->count())
+            @foreach($newsList as $news)
             <div class="news-item">
-                <img src="{{ asset('images/anh1.jpg') }}">
-                <p>Khám phá địa điểm du lịch mới</p>
+                @if($news->images->count())
+                <img src="{{ asset('storage/' . $news->images->first()->image) }}" alt="">
+                @endif
+                <p>{{ $news->title }}</p>
             </div>
-            <div class="news-item">
-                <img src="{{ asset('images/anh1.jpg') }}">
-                <p>Kinh nghiệm săn vé giá rẻ</p>
-            </div>
-            <div class="news-item">
-                <img src="{{ asset('images/anh1.jpg') }}">
-                <p>Top resort đẹp nhất 2025</p>
-            </div>
+            @endforeach
+            @endif
+
             <div class="news-btn-wrap">
                 <button class="btn-news">Xem tất cả</button>
             </div>
+
         </div>
     </div>
 </section>
+
 <!-- FLASH SALE BANNER -->
 <section class="flash-sale">
     <div class="container">
@@ -312,7 +325,7 @@
 
 
 <!-- footer -->
- 
+
 <!-- JS RIÊNG CỦA HOME -->
 <script src="{{ asset('js/home.js') }}" defer></script>
 <script src="{{ asset('https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js') }}" defer></script>

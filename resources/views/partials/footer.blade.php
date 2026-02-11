@@ -42,9 +42,10 @@
 
             <div class="footer-info-col">
                 <h4>Tổng công ty Viễn thông MobiFone</h4>
-                <p>A: Tòa nhà MobiFone, lô VP1, P. Yên Hòa, Q. Cầu Giấy, Hà Nội</p>
-                <p>E: cskh@travellink.vn</p>
-                <p>T: (+84-24) 37831800</p>
+                <p>Email: {{ $footerSettings['company_email'] ?? '' }}</p>
+                <p>SĐT: {{ $footerSettings['company_phone'] ?? '' }}</p>
+                <p>Địa chỉ: {{ $footerSettings['company_address'] ?? '' }}</p>
+
             </div>
             <div class="footer-info-col">
                 <p>

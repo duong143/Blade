@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\Setting;
+use Illuminate\Support\Facades\View;
+use Illuminate\Pagination\Paginator;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +23,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $footerSettings = Setting::where('group', 'footer')
+            ->pluck('value', 'key')
+            ->toArray();
+
+        View::share('footerSettings', $footerSettings);
+
+        Paginator::useBootstrapFive();
     }
 }

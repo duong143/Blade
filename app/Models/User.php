@@ -18,10 +18,16 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'phone',
         'name',
+        'email',
         'password',
-        'is_admin'
+        'phone',
+        'is_admin',
+        'roles',
+        'admin_news',
+        'admin_banner',
+        'admin_footer',
+
     ];
 
 
@@ -45,6 +51,26 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'roles' => 'array',
+            'is_admin' => 'boolean',
         ];
+    }
+
+
+
+    public function hasRole(string $role): bool
+    {
+        // Chưa có roles
+        if (empty($this->roles)) {
+            return false;
+        }
+
+        // Admin tổng → có mọi quyền
+        if (in_array('admin', $this->roles)) {
+            return true;
+        }
+
+        // Kiểm tra quyền cụ thể
+        return in_array($role, $this->roles);
     }
 }
