@@ -1,6 +1,13 @@
 @extends('admin.layout')
 
 @section('content')
+@cannot('banners.create')
+<div class="alert alert-danger">
+    Bạn không có quyền tạo banner.
+</div>
+@endcannot
+@can('banners.create')
+
 <h2>Thêm Banner</h2>
 
 <form method="POST" action="{{ route('admin.banners.store') }}" enctype="multipart/form-data">
@@ -43,4 +50,5 @@
 
     <button class="btn btn-success">Lưu</button>
 </form>
+@endcan
 @endsection

@@ -3,6 +3,13 @@
 @section('content')
 <h2>Sửa tin tức</h2>
 
+@cannot('news.edit')
+<div class="alert alert-danger">
+    Bạn không có quyền sửa tin tức.
+</div>
+@endcannot
+
+@can('news.edit')
 <form method="POST"
     action="{{ route('admin.news.update', $news) }}"
     enctype="multipart/form-data">
@@ -26,6 +33,8 @@
                     src="{{ asset('storage/' . $img->image) }}"
                     width="450"
                     class="img-thumbnail">
+
+                @can('news.edit')
                 <button
                     type="button"
                     class="btn btn-danger btn-sm delete-image"
@@ -33,8 +42,8 @@
                     style="position:absolute;top:5px;right:5px">
                     <i class="fas fa-times"></i>
                 </button>
+                @endcan
             </div>
-
             @endforeach
         </div>
     </div>
@@ -70,6 +79,8 @@
 
     <button class="btn btn-primary">Cập nhật</button>
 </form>
+@endcan
+
 @push('scripts')
 <script>
     $(document).on('click', '.delete-image', function() {
@@ -79,7 +90,7 @@
         let imageId = btn.data('id');
 
         $.ajax({
-            url: "/admin/news-images/" + imageId,
+            url: "{{ route('admin.news-images.destroy', ['image' => '__ID__']) }}".replace('__ID__', imageId),
             type: 'DELETE',
             data: {
                 _token: "{{ csrf_token() }}"
@@ -91,38 +102,19 @@
             },
             error: function(xhr) {
                 console.log(xhr.responseText);
-                alert('Xóa ảnh thất bại');
+
+                let msg = 'Xóa ảnh thất bại';
+
+                if (xhr.status === 403) msg = '403 - Bạn không có quyền xóa ảnh';
+                else if (xhr.status === 404) msg = '404 - Không tìm thấy route / ảnh';
+                else if (xhr.status === 419) msg = '419 - CSRF hết hạn, hãy F5 lại trang';
+                else if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+
+                alert(msg);
             }
         });
     });
 </script>
 @endpush
-
-
-<script>
-    $(document).on('click', '.delete-image', function() {
-        if (!confirm('Xóa ảnh này?')) return;
-
-        let btn = $(this);
-        let imageId = btn.data('id');
-
-        $.ajax({
-            url: "{{ url('/admin/news-images') }}/" + imageId,
-            type: 'DELETE',
-            data: {
-                _token: "{{ csrf_token() }}"
-            },
-            success: function(res) {
-                if (res.success) {
-                    btn.closest('.image-item').remove();
-                }
-            },
-            error: function() {
-                alert('Xóa ảnh thất bại');
-            }
-        });
-    });
-</script>
-
 
 @endsection

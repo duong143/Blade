@@ -30,7 +30,6 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'phone' => $user->phone,
                 'name' => $user->name,
-                'is_admin' => $user->is_admin
             ]
         ]);
 
@@ -59,7 +58,6 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'phone' => $user->phone,
                 'name' => $user->name,
-                'is_admin' => $user->is_admin ?? 0
             ]
         ]);
 

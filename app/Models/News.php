@@ -16,6 +16,11 @@ class News extends Model
         'is_active',
     ];
 
+    public function firstImage()
+    {
+        return $this->hasOne(\App\Models\NewsImage::class)->latestOfMany();
+    }
+
     public function images()
     {
         return $this->hasMany(NewsImage::class);

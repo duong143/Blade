@@ -2,6 +2,7 @@
 
 @section('content')
 <h2>Banner & Ưu đãi</h2>
+
 <form method="GET" action="{{ route('admin.banners.index') }}" class="mb-3">
     <div class="row">
 
@@ -46,10 +47,11 @@
     </div>
 </form>
 
-
+@can('banners.create')
 <a href="{{ route('admin.banners.create') }}" class="btn btn-primary mb-3">
     + Thêm banner
 </a>
+@endcan
 
 <table class="table table-bordered">
     <thead>
@@ -80,11 +82,14 @@
                 {{ $banner->is_active ? 'Bật' : 'Tắt' }}
             </td>
             <td>
+                @can('banners.edit')
                 <a href="{{ route('admin.banners.edit', $banner) }}"
                     class="btn btn-sm btn-warning">
                     <i class="fas fa-edit"></i>
                 </a>
+                @endcan
 
+                @can('banners.delete')
                 <form action="{{ route('admin.banners.destroy', $banner) }}"
                     method="POST"
                     style="display:inline-block"
@@ -95,6 +100,7 @@
                         <i class="fas fa-trash"></i>
                     </button>
                 </form>
+                @endcan
             </td>
 
         </tr>
@@ -103,6 +109,7 @@
     </tbody>
 
 </table>
+
 <div class="d-flex justify-content-between align-items-center mt-3">
 
     {{-- Chọn số dòng --}}
@@ -124,7 +131,6 @@
     </form>
 
 </div>
-
 
 <div class="d-flex justify-content-center mt-3">
     {{ $banners->links() }}

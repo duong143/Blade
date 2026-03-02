@@ -3,6 +3,13 @@
 @section('content')
 <h2>Thêm tin tức</h2>
 
+@cannot('news.create')
+<div class="alert alert-danger">
+    Bạn không có quyền tạo tin tức.
+</div>
+@endcannot
+
+@can('news.create')
 <form method="POST"
     action="{{ route('admin.news.store') }}"
     enctype="multipart/form-data">
@@ -43,8 +50,9 @@
 
     <button class="btn btn-success">Lưu</button>
 </form>
+
 <script>
-    $(document).ready(function () {
+    $(document).ready(function() {
         $('#news-images').fileinput({
             theme: 'fas',
             showUpload: false,
@@ -56,5 +64,6 @@
         });
     });
 </script>
+@endcan
 
 @endsection

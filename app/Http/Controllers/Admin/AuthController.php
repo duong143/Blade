@@ -32,14 +32,24 @@ class AuthController extends Controller
             ? 'email'
             : 'phone';
 
-        // Tìm user admin
-        $user = User::where($field, $login)
-            ->where('is_admin', 1)
-            ->first();
+
+        $user = User::where($field, $login)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return back()->withErrors([
                 'login' => 'Tài khoản hoặc mật khẩu không đúng'
+            ]);
+        }
+
+        if (! $user->hasAnyPermission([
+            'users.view',
+            'news.view',
+            'banners.view',
+            'roles.view',
+            'footer.view',
+        ])) {
+            return back()->withErrors([
+                'login' => 'Bạn không có quyền vào admin'
             ]);
         }
 
@@ -54,7 +64,16 @@ class AuthController extends Controller
 
     public function logout()
     {
-        session()->forget('admin');
+        // logout Auth (Spatie dùng Auth::user())
+        \Illuminate\Support\Facades\Auth::logout();
+
+        // xoá session admin (KHÔNG flush toàn bộ để tránh ảnh hưởng session khác)
+        session()->forget(['admin', 'admin_id']);
+
+        // regenerate session để sạch CSRF/session fixation
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
         return redirect('/admin/login');
     }
 }

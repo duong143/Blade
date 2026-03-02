@@ -10,8 +10,6 @@
         @csrf
 
         <div class="card-body">
-
-            {{-- Hiển thị lỗi validate --}}
             @if ($errors->any())
             <div class="alert alert-danger">
                 <ul class="mb-0">
@@ -22,83 +20,41 @@
             </div>
             @endif
 
-            {{-- Số điện thoại --}}
             <div class="form-group">
                 <label>Số điện thoại</label>
-                <input type="text"
-                    name="phone"
-                    class="form-control"
-                    value="{{ old('phone') }}"
-                    placeholder="Nhập số điện thoại"
-                    required>
+                <input type="text" name="phone" class="form-control"
+                    value="{{ old('phone') }}" required>
             </div>
 
-            {{-- Mật khẩu --}}
+            <div class="form-group">
+                <label>Tên</label>
+                <input type="text" name="name" class="form-control"
+                    value="{{ old('name') }}">
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control"
+                    value="{{ old('email') }}">
+            </div>
+
             <div class="form-group">
                 <label>Mật khẩu</label>
-                <input type="password"
-                    name="password"
-                    class="form-control"
-                    placeholder="Nhập mật khẩu"
-                    required>
+                <input type="password" name="password" class="form-control" required>
             </div>
-
-            {{-- Quyền admin tổng --}}
+            @can('roles.edit')
             <div class="form-group">
-                <label>Quyền hệ thống</label>
-                <select name="is_admin" class="form-control">
-                    <option value="0" {{ old('is_admin') == '0' ? 'selected' : '' }}>
-                        User
+                <label>Role</label>
+                <select name="role" class="form-control">
+                    <option value="">-- Không gán role --</option>
+                    @foreach($roles as $role)
+                    <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>
+                        {{ $role }}
                     </option>
-                    <option value="1" {{ old('is_admin') == '1' ? 'selected' : '' }}>
-                        Admin (toàn quyền)
-                    </option>
+                    @endforeach
                 </select>
             </div>
-
-            <hr>
-
-            {{-- Phân quyền CMS --}}
-            <div class="form-group">
-                <label><strong>Phân quyền CMS</strong></label>
-
-                <div class="form-check">
-                    <input class="form-check-input"
-                        type="checkbox"
-                        name="admin_news"
-                        value="1"
-                        {{ old('admin_news') ? 'checked' : '' }}>
-                    <label class="form-check-label">
-                        Admin tin tức du lịch
-                    </label>
-                </div>
-
-                <div class="form-check">
-                    <input class="form-check-input"
-                        type="checkbox"
-                        name="admin_banner"
-                        value="1"
-                        {{ old('admin_banner') ? 'checked' : '' }}>
-                    <label class="form-check-label">
-                        Admin ảnh banner & ưu đãi
-                    </label>
-                </div>
-
-                <div class="form-check">
-                    <input class="form-check-input"
-                        type="checkbox"
-                        name="admin_footer"
-                        value="1"
-                        {{ old('admin_footer') ? 'checked' : '' }}>
-                    <label class="form-check-label">
-                        Admin cấu hình footer
-                    </label>
-                </div>
-
-                <small class="text-muted">
-                    Chỉ tick những quyền admin này được phép sử dụng
-                </small>
-            </div>
+            @endcan
 
         </div>
 
@@ -107,12 +63,10 @@
                 <i class="fas fa-save"></i> Tạo user
             </button>
 
-            <a href="{{ route('admin.users.index') }}"
-                class="btn btn-secondary">
+            <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">
                 Quay lại
             </a>
         </div>
-
     </form>
 </div>
 @endsection

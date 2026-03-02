@@ -4,22 +4,29 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 
 class AdminMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        $adminId = session('admin_id');
-
-        if (!$adminId) {
+        if (!session()->has('admin_id')) {
             return redirect('/admin/login');
         }
 
-        $admin = User::find($adminId);
+        $adminId = session('admin_id');
 
-        if (!$admin || $admin->is_admin != 1) {
-            abort(403, 'Bạn không có quyền truy cập admin');
+        // Nếu Auth chưa login hoặc đang login sai user -> sync lại
+        if (!Auth::check() || Auth::id() != $adminId) {
+            $user = User::find($adminId);
+
+            if (!$user) {
+                session()->flush();
+                return redirect()->route('admin.login');
+            }
+
+            Auth::login($user);
         }
 
         return $next($request);

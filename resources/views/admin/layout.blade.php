@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin')</title>
 
     <link rel="stylesheet" href="{{ asset('admin-assets/css/adminlte.min.css') }}">
@@ -47,6 +48,7 @@
                 <nav>
                     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
                         {{-- User --}}
+                        @can('users.view')
                         <li class="nav-item">
                             <a href="{{ route('admin.users.index') }}"
                                 class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}">
@@ -54,7 +56,27 @@
                                 <p>User</p>
                             </a>
                         </li>
+                        @endcan
+                        {{-- Roles --}}
+                        @can('roles.view')
+                        <li class="nav-item">
+                            <a href="{{ route('admin.roles.index') }}"
+                                class="nav-link {{ request()->is('admin/roles*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-user-shield"></i>
+                                <p>Roles</p>
+                            </a>
+                        </li>
+                        @endcan
+                        @php
+                        $canSeeSystemMenu =
+                        auth()->check() && (
+                        auth()->user()->can('footer.view') ||
+                        auth()->user()->can('banners.view') ||
+                        auth()->user()->can('news.view')
+                        );
+                        @endphp
 
+                        @if ($canSeeSystemMenu)
                         <li class="nav-item has-treeview {{ request()->is('admin/settings*') || request()->is('admin/banners*') || request()->is('admin/news*') ? 'menu-open' : '' }}">
                             <a href="#"
                                 class="nav-link {{ request()->is('admin/settings*') || request()->is('admin/banners*') || request()->is('admin/news*') ? 'active' : '' }}">
@@ -66,6 +88,7 @@
                             </a>
 
                             <ul class="nav nav-treeview">
+                                @can('footer.view')
                                 <li class="nav-item">
                                     <a href="{{ route('admin.settings.footer') }}"
                                         class="nav-link {{ request()->is('admin/settings/footer') ? 'active' : '' }}">
@@ -73,6 +96,8 @@
                                         <p>Cấu hình Footer</p>
                                     </a>
                                 </li>
+                                @endcan
+                                @can('banners.view')
                                 <li class="nav-item">
                                     <a href="{{ route('admin.banners.index') }}"
                                         class="nav-link {{ request()->is('admin/banners*') ? 'active' : '' }}">
@@ -80,6 +105,8 @@
                                         <p>Ảnh banner & Ưu đãi</p>
                                     </a>
                                 </li>
+                                @endcan
+                                @can('news.view')
                                 <li class="nav-item">
                                     <a href="{{ route('admin.news.index') }}"
                                         class="nav-link {{ request()->is('admin/news*') ? 'active' : '' }}">
@@ -87,10 +114,13 @@
                                         <p>Tin tức du lịch</p>
                                     </a>
                                 </li>
+                                @endcan
 
                             </ul>
                         </li>
+                        @endif
                     </ul>
+
                 </nav>
             </div>
         </aside>
@@ -106,14 +136,20 @@
 
     {{-- Bootstrap --}}
     <script src="{{ asset('admin-assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-
+    <script>
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+    </script>
     {{-- AdminLTE --}}
     <script src="{{ asset('admin-assets/js/adminlte.min.js') }}"></script>
 
     {{-- Bootstrap File Input --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-fileinput@5.5.2/js/fileinput.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-fileinput@5.5.2/themes/fas/theme.min.js"></script>
-@stack('scripts')
+    @stack('scripts')
 
 </body>
 

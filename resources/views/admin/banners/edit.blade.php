@@ -1,6 +1,13 @@
 @extends('admin.layout')
 
 @section('content')
+@cannot('banners.edit')
+<div class="alert alert-danger">
+    Bạn không có quyền sửa banner.
+</div>
+@endcannot
+
+@can('banners.edit')
 <h2>Sửa Banner</h2>
 
 <form method="POST"
@@ -34,7 +41,7 @@
             </option>
         </select>
     </div>
-    
+
     <div class="mb-3">
         <label>Thứ tự</label>
         <input type="number" name="position" class="form-control" value="{{ $banner->position }}">
@@ -49,4 +56,5 @@
 
     <button class="btn btn-primary">Lưu</button>
 </form>
+@endcan
 @endsection

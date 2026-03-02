@@ -36,9 +36,11 @@
     </div>
 </form>
 
+@can('news.create')
 <a href="{{ route('admin.news.create') }}" class="btn btn-primary mb-3">
     + Thêm tin
 </a>
+@endcan
 
 <table class="table table-bordered">
     <thead>
@@ -53,9 +55,9 @@
         @foreach($news as $item)
         <tr>
             <td>
-                @if ($item->images && $item->images->count() > 0)
+                @if ($item->firstImage)
                 <img
-                    src="{{ asset('storage/' . $item->images->first()->image) }}"
+                    src="{{ asset('storage/' . $item->firstImage->image) }}"
                     width="300">
                 @else
                 <span>Không có ảnh</span>
@@ -65,11 +67,14 @@
             <td>{{ $item->title }}</td>
             <td>{{ $item->is_active ? 'Bật' : 'Tắt' }}</td>
             <td>
+                @can('news.edit')
                 <a href="{{ route('admin.news.edit', $item) }}"
                     class="btn btn-sm btn-warning">
                     ✏️
                 </a>
+                @endcan
 
+                @can('news.delete')
                 <form action="{{ route('admin.news.destroy', $item) }}"
                     method="POST"
                     style="display:inline-block"
@@ -78,6 +83,7 @@
                     @method('DELETE')
                     <button class="btn btn-sm btn-danger">🗑</button>
                 </form>
+                @endcan
             </td>
 
         </tr>

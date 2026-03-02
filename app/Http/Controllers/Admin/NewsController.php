@@ -7,13 +7,13 @@ use App\Models\News;
 use Illuminate\Http\Request;
 use App\Models\NewsImage;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class NewsController extends Controller
 {
     public function index(Request $request)
     {
-        // 🔧 SỬA: load quan hệ images
-        $query = News::with('images');
+        $query = News::with('firstImage');
 
         // 🔍 Filter theo tiêu đề
         if ($request->filled('title')) {
@@ -62,16 +62,6 @@ class NewsController extends Controller
 
                 $imagePath = $image->store('news', 'public');
 
-                // copy sang public/storage (artisan serve)
-                $from = storage_path('app/public/' . $imagePath);
-                $to   = public_path('storage/' . $imagePath);
-
-                if (!file_exists(dirname($to))) {
-                    mkdir(dirname($to), 0755, true);
-                }
-
-                copy($from, $to);
-
                 $news->images()->create([
                     'image' => $imagePath
                 ]);
@@ -85,6 +75,7 @@ class NewsController extends Controller
 
     public function edit(News $news)
     {
+        $news->load('images');
         return view('admin.news.edit', compact('news'));
     }
 
@@ -109,15 +100,6 @@ class NewsController extends Controller
 
                 $imagePath = $image->store('news', 'public');
 
-                // copy sang public/storage (cho artisan serve)
-                $from = storage_path('app/public/' . $imagePath);
-                $to   = public_path('storage/' . $imagePath);
-
-                if (!file_exists(dirname($to))) {
-                    mkdir(dirname($to), 0755, true);
-                }
-
-                copy($from, $to);
 
                 $news->images()->create([
                     'image' => $imagePath
@@ -132,7 +114,14 @@ class NewsController extends Controller
 
     public function destroy(News $news)
     {
-        // 🔧 (không bắt buộc nhưng đúng chuẩn)
+        $news->load('images');
+
+        foreach ($news->images as $img) {
+            if ($img->image && Storage::disk('public')->exists($img->image)) {
+                Storage::disk('public')->delete($img->image);
+            }
+        }
+
         $news->images()->delete();
         $news->delete();
 
@@ -142,16 +131,30 @@ class NewsController extends Controller
 
     public function deleteImage(NewsImage $image)
     {
-        // xoá file vật lý
-        if ($image->image && Storage::disk('public')->exists($image->image)) {
-            Storage::disk('public')->delete($image->image);
+        try {
+            // xoá file vật lý
+            if ($image->image && Storage::disk('public')->exists($image->image)) {
+                Storage::disk('public')->delete($image->image);
+            }
+
+            // xoá record DB
+            $image->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Xóa ảnh thành công',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('DELETE_NEWS_IMAGE_FAILED', [
+                'image_id' => $image->id ?? null,
+                'path' => $image->image ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Xóa ảnh thất bại: ' . $e->getMessage(),
+            ], 500);
         }
-
-        // xoá record DB
-        $image->delete();
-
-        return response()->json([
-            'success' => true
-        ]);
     }
 }

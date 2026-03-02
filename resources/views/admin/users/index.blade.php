@@ -6,9 +6,11 @@
         <h3 class="card-title">Danh sách user</h3>
 
         <div class="card-tools">
+            @can('users.create')
             <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus"></i> Thêm user
             </a>
+            @endcan
         </div>
     </div>
 
@@ -40,20 +42,27 @@
                     <td>{{ $user->phone }}</td>
                     <td>{{ $user->name ?? '—' }}</td>
                     <td>{{ $user->created_at->format('d/m/Y H:i') }}</td>
+
+                    {{-- Quyền (Spatie roles) --}}
                     <td>
-                        @if ($user->is_admin)
-                        <span class="badge badge-success">Admin</span>
+                        @php $roleName = $user->getRoleNames()->first(); @endphp
+                        @if($roleName)
+                        <span class="badge badge-success">{{ $roleName }}</span>
                         @else
-                        <span class="badge badge-secondary">User</span>
+                        <span class="badge badge-secondary">No role</span>
                         @endif
                     </td>
+
                     <td>
+                        @can('users.edit')
                         <a href="{{ route('admin.users.edit', $user) }}"
                             class="btn btn-warning btn-sm"
                             title="Sửa">
                             <i class="fas fa-edit"></i>
                         </a>
+                        @endcan
 
+                        @can('users.delete')
                         <form action="{{ route('admin.users.destroy', $user) }}"
                             method="POST"
                             class="d-inline">
@@ -66,6 +75,7 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
+                        @endcan
                     </td>
                 </tr>
                 @empty
