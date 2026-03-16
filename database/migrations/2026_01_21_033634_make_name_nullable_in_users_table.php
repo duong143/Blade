@@ -12,17 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('name')->nullable()->change();
+            if (Schema::hasColumn('users', 'name')) {
+                $table->string('name')->nullable()->change();
+            }
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            if (Schema::hasColumn('users', 'name')) {
+                $table->string('name')->nullable(false)->change();
+            }
         });
     }
 };

@@ -8,7 +8,7 @@
             <a href="/" class="menu-link" data-type="hotel">Khách sạn</a>
             <a href="/" class="menu-link" data-type="airport">Xe sân bay</a>
             <a href="#">Săn vé rẻ</a>
-            <a href="#">Combo</a>
+            <a href="{{ route('combo.index') }}" class="menu-link">Combo</a>
             <a href="#">Ưu đãi</a>
             <a href="#">Tin tức</a>
         </nav>

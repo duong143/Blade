@@ -76,6 +76,22 @@
                         );
                         @endphp
 
+                        <li class="nav-item">
+                            <a href="{{ route('admin.combos.index') }}"
+                                class="nav-link {{ request()->is('admin/combos*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-suitcase-rolling"></i>
+                                <p>Combos</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('admin.combo-departures.index') }}"
+                                class="nav-link {{ request()->is('admin/combo-departures*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-calendar-alt"></i>
+                                <p>Đợt khởi hành</p>
+                            </a>
+                        </li>
+
                         @if ($canSeeSystemMenu)
                         <li class="nav-item has-treeview {{ request()->is('admin/settings*') || request()->is('admin/banners*') || request()->is('admin/news*') ? 'menu-open' : '' }}">
                             <a href="#"

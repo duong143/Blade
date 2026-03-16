@@ -1,0 +1,323 @@
+.passenger-page {
+    background: #F4F6FA;
+    min-height: 100vh;
+    padding-top: 20px;
+    padding-bottom: 24px;
+}
+
+.booking-step-background {
+    width: 100%;
+    background: #F4F6FA;
+    padding: 14px 0;
+    margin-bottom: 10px;
+}
+
+.booking-step-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0;
+}
+
+.booking-step-bar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 1440px;
+    min-height: 30px;
+}
+
+.booking-step-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1;
+    height: 30px;
+}
+
+.step-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.booking-step-item .step-text {
+    font-size: 24px;
+    white-space: nowrap;
+}
+
+.booking-step-item.is-done .step-icon-check {
+    background: #2DBE8D;
+    color: #fff;
+}
+
+.booking-step-item.is-done .step-text {
+    color: #99A3AE;
+    font-weight: 500;
+}
+
+.booking-step-item.is-active .step-icon-number {
+    background: #2952CC;
+    color: #fff;
+}
+
+.booking-step-item.is-active .step-text {
+    color: #2952CC;
+    font-weight: 600;
+}
+
+.booking-step-item.is-disabled .step-icon-number {
+    background: transparent;
+    color: #C7CDD8;
+    border: 1px solid #D7DCE5;
+}
+
+.booking-step-item.is-disabled .step-text {
+    color: #C3C9D4;
+    font-weight: 500;
+}
+
+.booking-step-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 2px;
+}
+
+.booking-step-arrow img {
+    width: 16px;
+    height: 16px;
+    opacity: 0.7;
+    display: block;
+}
+
+.passenger-page input::placeholder {
+    color: #99A3AE;
+    opacity: 1;
+}
+
+.passenger-page textarea::placeholder {
+    color: #99A3AE;
+    opacity: 1;
+}
+
+.passenger-action-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 28px;
+    margin-top: 24px;
+}
+
+.passenger-btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #99A3AE;
+    text-decoration: none;
+    padding-right: 40px;
+}
+
+.passenger-btn-back:hover {
+    color: #7f8994;
+}
+
+.passenger-btn-back .back-arrow {
+    font-size: 18px;
+    line-height: 1;
+    
+}
+
+.passenger-btn-next {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 150px;
+    height: 40px;
+    padding: 0 28px;
+    border-radius: 6px;
+    background: #2952CC;
+    color: #fff;
+    font-size: 14px;
+    text-decoration: none;
+    box-shadow: none;
+    border: none;
+    outline: none;
+}
+
+.passenger-btn-next:hover {
+    background: #516ed7;
+    color: #fff;
+    text-decoration: none;
+}
+
+.passenger-btn-next:focus,
+.passenger-btn-next:active,
+.passenger-btn-next:focus-visible {
+    outline: none;
+    box-shadow: none;
+    border: none;
+}
+
+.booking-summary-card,
+.booking-coupon-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+}
+
+.booking-coupon-card {
+    margin-top: 16px;
+    padding: 22px 20px;
+}
+
+.booking-summary-head {
+    background: #3559E6;
+    padding: 18px 18px 16px;
+    color: #fff;
+}
+
+.booking-summary-title {
+    font-size: 16px;
+    line-height: 1.4;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.booking-summary-sub {
+    font-size: 12px;
+    line-height: 1.5;
+    font-weight: 400;
+    opacity: 0.95;
+}
+
+.booking-summary-body {
+    padding: 18px 18px 16px;
+}
+
+.booking-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    font-size: 14px;
+    color: #4B5563;
+    margin-bottom: 10px;
+}
+
+.booking-summary-row span:last-child:not(.booking-summary-discount) {
+    color: #1A202C;
+}
+
+.booking-summary-discount {
+    color: #00A96C !important;
+    font-weight: 400 !important;
+}
+
+.booking-summary-divider {
+    height: 1px;
+    margin: 18px 0;
+    background: repeating-linear-gradient(
+        to right,
+        #E6E8F0,
+        #E6E8F0 8px,
+        transparent 8px,
+        transparent 16px
+    );
+}
+
+.booking-summary-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.booking-summary-total-label {
+    font-size: 15px;
+    color: #4B5563;
+    padding-top: 4px;
+}
+
+.booking-summary-total-right {
+    text-align: right;
+}
+
+.booking-summary-total-price {
+    color: #F43F5E;
+    font-size: 18px;
+    line-height: 1.2;
+    font-weight: 800;
+}
+
+.booking-summary-total-note {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #6B7280;
+    font-style: italic;
+}
+
+.booking-summary-change {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.booking-summary-change a {
+    color: #3559E6;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.booking-summary-change a:hover {
+    text-decoration: underline;
+}
+
+.booking-coupon-title {
+    font-size: 18px;
+    line-height: 1.4;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 16px;
+}
+
+.booking-coupon-form {
+    display: flex;
+    align-items: stretch;
+}
+
+.booking-coupon-form .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    height: 44px;
+}
+
+.booking-coupon-btn {
+    min-width: 92px;
+    height: 41px;
+    border: none;
+    border-radius: 0 6px 6px 0;
+    background: #3559E6;
+    color: #fff;
+    font-size: 14px;
+    padding: 0 18px;
+}
+
+.booking-coupon-note {
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #99A3AE;
+}

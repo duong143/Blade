@@ -135,8 +135,7 @@ returnInput.addEventListener('change', validateDate);
 const menuLinks = document.querySelectorAll('.menu a');
 
 menuLinks.forEach(link => {
-    link.addEventListener('click', function (e) {
-        e.preventDefault();
+    link.addEventListener('click', function () {
         menuLinks.forEach(item => item.classList.remove('active'));
         this.classList.add('active');
     });
@@ -236,14 +235,17 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     menuLinks.forEach(link => {
         link.addEventListener('click', e => {
-            e.preventDefault();
             const type = link.dataset.type;
-            if (type) showForm(type);
+
+            if (type) {
+                e.preventDefault();
+                showForm(type);
+            }
         });
     });
     const params = new URLSearchParams(window.location.search);
     const form = params.get("form");
     if (form) showForm(form);
 
-    
+
 });

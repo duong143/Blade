@@ -9,24 +9,30 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn([
-                'is_admin',
-                'admin_news',
-                'admin_banner',
-                'admin_footer',
+
+            // ✅ ví dụ danh sách cột cần drop (bạn thay đúng tên cột đang drop trong file)
+            $columns = [
+                'roles',
                 'role_id',
-            ]);
+                'admin_id',
+                'admin_name',
+                'old_admin',
+                // ... thêm các cột mà file của bạn đang drop ...
+            ];
+
+            foreach ($columns as $col) {
+                if (Schema::hasColumn('users', $col)) {
+                    $table->dropColumn($col);
+                }
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('role_id')->nullable();
-            $table->boolean('is_admin')->default(0);
-            $table->boolean('admin_news')->default(0);
-            $table->boolean('admin_banner')->default(0);
-            $table->boolean('admin_footer')->default(0);
+            // Nếu bạn muốn phục hồi các cột này khi rollback, bạn cần định nghĩa lại chúng ở đây.
+            // Tuy nhiên, nếu bạn không cần phục hồi thì có thể để trống phần down() hoặc chỉ ghi chú.
         });
     }
 };

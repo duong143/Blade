@@ -18,8 +18,11 @@
     <link rel="stylesheet" href="{{ asset('css/info-strip.css') }}">
     <link rel="stylesheet" href="{{ asset('css/footer.css') }}">
     <link rel="stylesheet" href="{{ asset('css/login.css') }}">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    @stack('styles')
+
 
 </head>
 
@@ -29,7 +32,11 @@
 
     @yield('content')
 
+    @yield('info-strip')
+
+    @if (!View::hasSection('info-strip'))
     @include('partials.info-strip')
+    @endif
 
     @include('partials.footer')
 
@@ -117,7 +124,7 @@
     <script src="{{ asset('js/login-modal.js') }}"></script>
     <script src="{{ asset('js/header.js') }}"></script>
 
-
+@stack('scripts')
 </body>
 
 </html>

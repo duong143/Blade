@@ -6,26 +6,25 @@ use Illuminate\Support\ServiceProvider;
 use App\Models\Setting;
 use Illuminate\Support\Facades\View;
 use Illuminate\Pagination\Paginator;
-
+use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        $footerSettings = Setting::where('group', 'footer')
-            ->pluck('value', 'key')
-            ->toArray();
+        $footerSettings = [];
+
+        // ✅ Chỉ query khi bảng settings đã tồn tại (tránh crash migrate:fresh)
+        if (Schema::hasTable('settings')) {
+            $footerSettings = Setting::where('group', 'footer')
+                ->pluck('value', 'key')
+                ->toArray();
+        }
 
         View::share('footerSettings', $footerSettings);
 

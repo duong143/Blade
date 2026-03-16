@@ -45,12 +45,20 @@ class NewsController extends Controller
     {
         $request->validate([
             'title' => 'required',
-            'images.*' => 'image'
+            'images' => 'required|array|min:1',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
+
+        $firstImagePath = null;
+
+        if ($request->hasFile('images')) {
+            $firstImagePath = $request->file('images')[0]->store('news', 'public');
+        }
 
         // 1. Tạo tin tức
         $news = News::create([
             'title' => $request->title,
+            'image' => $firstImagePath,
             'excerpt' => $request->excerpt,
             'content' => $request->content,
             'is_active' => $request->has('is_active'),
@@ -58,9 +66,12 @@ class NewsController extends Controller
 
         // 2. Lưu nhiều ảnh
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-
-                $imagePath = $image->store('news', 'public');
+            foreach ($request->file('images') as $index => $image) {
+                if ($index === 0) {
+                    $imagePath = $firstImagePath;
+                } else {
+                    $imagePath = $image->store('news', 'public');
+                }
 
                 $news->images()->create([
                     'image' => $imagePath
@@ -83,23 +94,32 @@ class NewsController extends Controller
     {
         $request->validate([
             'title' => 'required',
-            'images.*' => 'image'
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
 
-        // 1. Cập nhật nội dung tin
-        $news->update([
+        $data = [
             'title' => $request->title,
             'excerpt' => $request->excerpt,
             'content' => $request->content,
             'is_active' => $request->has('is_active'),
-        ]);
+        ];
+
+        // Nếu có upload ảnh mới và news chưa có ảnh đại diện thì lấy ảnh đầu tiên làm image
+        if ($request->hasFile('images') && empty($news->image)) {
+            $data['image'] = $request->file('images')[0]->store('news', 'public');
+        }
+
+        // 1. Cập nhật nội dung tin
+        $news->update($data);
 
         // 2. Thêm ảnh mới (nếu có)
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-
-                $imagePath = $image->store('news', 'public');
-
+            foreach ($request->file('images') as $index => $image) {
+                if (empty($news->image) && $index === 0 && !empty($data['image'])) {
+                    $imagePath = $data['image'];
+                } else {
+                    $imagePath = $image->store('news', 'public');
+                }
 
                 $news->images()->create([
                     'image' => $imagePath

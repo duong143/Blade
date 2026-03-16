@@ -1,0 +1,364 @@
+/*BANNER */
+.combo-banner {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+}
+
+.combo-banner>.container {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+
+.banner-wrapper,
+.banner-slider {
+    width: 100%;
+    max-width: none;
+}
+
+.banner-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.banner-slider {
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.banner-track {
+    display: flex;
+    transition: transform 0.5s ease;
+}
+
+.banner-slide {
+    min-width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.banner-slide img {
+    max-height: 220px;
+    object-fit: contain;
+    display: block;
+}
+
+.banner-track img {
+    min-width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+}
+
+.combo-page {
+    background: #ffffff;
+    padding: 28px 0 2px;
+}
+
+.combo-search-box {
+    width: 710px;
+    margin: 0 auto;
+}
+
+.combo-search {
+    height: 45px;
+    border: 1px solid #E4E7EB;
+    border-radius: 6px;
+    background: #fff;
+
+    display: flex;
+    align-items: center;
+    padding: 0 10px 0 14px;
+}
+
+.combo-search-input {
+    border: none;
+    outline: none;
+    flex: 1;
+    height: 100%;
+    font-size: 14px;
+    background: transparent;
+}
+
+.combo-search-icon {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .combo-search-box {
+        width: 100%;
+    }
+}
+
+/* GRID 3 CỘT CỐ ĐỊNH */
+.combo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 370px);
+    justify-content: center;
+    /* căn giữa */
+    gap: 24px;
+    margin-top: 24px;
+}
+
+/* CARD KÍCH THƯỚC CHUẨN */
+.combo-card {
+    width: 370px;
+    height: 400px;
+    border: 1px solid #E4E7EB;
+    border-radius: 10px;
+    background: #fff;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ẢNH TRÊN */
+.combo-card .thumb {
+    height: 190px;
+    background: #ddd;
+    position: relative;
+    overflow: hidden;
+}
+
+.combo-card .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* BODY */
+.combo-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.combo-badge-sale {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+
+    width: 49px;
+    height: 28px;
+
+    background: #E61E3C;
+    color: #fff;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 5px;
+
+    clip-path: polygon(10px 0,
+            100% 0,
+            100% 100%,
+            10px 100%,
+            0 50%);
+}
+
+.tourName {
+    font-size: 16px;
+    font-weight: 500;
+    color: #11181c;
+}
+
+.combo-card .text-muted>div>div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.5;
+}
+
+.combo-card .text-muted>div>div img {
+    width: 14px;
+    height: 14px;
+    display: block;
+    flex: 0 0 14px;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.2;
+}
+
+.meta-icon {
+    width: 14px;
+    height: 14px;
+    display: block;
+}
+
+.combo-price-old {
+    text-decoration: line-through;
+    color: #9aa0a6;
+    font-size: 12px;
+}
+
+.combo-price-new {
+    color: #ff3b30;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+/* khối dưới cùng chia 2 bên */
+.combo-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: auto;
+    gap: 10px;
+}
+
+/* block giá bên trái */
+.combo-price-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.combo-price-note {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* sao vàng nằm trên ảnh */
+.combo-stars {
+    position: absolute;
+    right: 12px;
+    bottom: 10px;
+    display: flex;
+    gap: 3px;
+    color: #FFC12B;
+    font-size: 12px;
+}
+
+/* block bên phải */
+.combo-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.combo-book-btn {
+    width: 120px;
+    height: 38px;
+    border-radius: 5px;
+    color: #fff;
+
+}
+
+.combo-preorder {
+    font-size: 13px;
+    color: #1EB3A0;
+}
+
+.combo-btn-primary {
+    background: #1f4ed8;
+    border-color: #1f4ed8;
+}
+
+.combo-btn-primary:hover {
+    background: #163fb0;
+    border-color: #163fb0;
+}
+
+/* thanh số trang */
+.combo-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin: 40px 0;
+    font-size: 14px;
+}
+
+/* PAGINATION COMBO */
+.combo-pagination-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 36px 0 10px;
+}
+
+.combo-pagination-list {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    margin: 0;
+}
+
+.combo-page-item {
+    margin: 0;
+    padding: 0;
+}
+
+.combo-page-link {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    border: none;
+    background: transparent;
+    color: #2b2f38;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.combo-page-link:hover {
+    background: #f2f4f7;
+    color: #2b2f38;
+    text-decoration: none;
+}
+
+.combo-page-item.active .combo-page-link {
+    background: #3f5bd8;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.combo-page-arrow {
+    font-size: 16px;
+}
+
+.combo-page-dots {
+    color: #6b7280;
+    cursor: default;
+}
+
+.combo-page-item.disabled .combo-page-link {
+    color: #c4c7ce;
+    pointer-events: none;
+    background: transparent;
+}
+
+.combo-page-item.disabled .combo-page-link:hover {
+    background: transparent;
+    color: #c4c7ce;
+}
