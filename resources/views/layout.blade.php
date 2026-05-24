@@ -48,7 +48,7 @@
             <h3 class="login-title">Đăng nhập</h3>
             <p class="login-desc">
                 Bạn vui lòng đăng nhập để lưu lại thông tin và nhận các ưu đãi đặc biệt
-                từ Travel Link dành cho thành viên.
+                từ Tour Link dành cho thành viên.
             </p>
 
             <div class="phone-input">
@@ -69,7 +69,7 @@
             <p class="login-policy">
                 Với việc tiếp tục, tôi đồng ý đã đọc và chấp thuận
                 <a href="#">Điều khoản & điều kiện</a> và
-                <a href="#">Quyền riêng tư</a> của Travel Link
+                <a href="#">Quyền riêng tư</a> của Tour Link
             </p>
 
             <div class="login-divider">
@@ -90,8 +90,7 @@
 
             <h3 class="login-title">Đăng ký</h3>
             <p class="login-desc">
-                Đăng ký tài khoản mới nhận ngay ưu đãi 200K khi đặt vé máy bay
-                tại Travel Link hoặc giảm giá 20% khi đặt phòng tại Travel Hotel.
+                Đăng ký tài khoản mới và cùng khám phá những chuyến đi tuyệt vời với chúng tôi!
             </p>
             <div class="phone-input">
                 <div class="phone-prefix">

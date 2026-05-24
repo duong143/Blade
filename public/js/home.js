@@ -161,16 +161,57 @@ if (airportSwapBtn && airportInputs.length === 2) {
 
 
 // chuyến sang flight khi ấn tìm kiếm
-const flightSearchBtn = document.querySelector(
-    '.flight-form .btn-search'
-);
+const flightSearchBtn = document.querySelector('.flight-form .btn-search');
+
+function extractAirportCode(value) {
+    const match = String(value || '').match(/\(([A-Z]{3,5})\)/);
+    return match ? match[1] : '';
+}
 
 if (flightSearchBtn) {
-    flightSearchBtn.addEventListener('click', () => {
-        window.location.href = '/flightsearch';
+    flightSearchBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        const fromValue = document.getElementById('from')?.value.trim() || '';
+        const toValue = document.getElementById('to')?.value.trim() || '';
+        const departureDateValue = document.getElementById('departDate')?.value || '';
+        const returnDateValue = document.getElementById('returnDate')?.value || '';
+        const isRoundTrip = document.getElementById('roundTrip')?.checked;
+
+        const fromCode = extractAirportCode(fromValue);
+        const toCode = extractAirportCode(toValue);
+
+        if (!fromValue || !toValue) {
+            alert('Vui lòng nhập điểm đi và điểm đến.');
+            return;
+        }
+
+        const params = new URLSearchParams();
+
+        params.set('from_text', fromValue);
+        params.set('to_text', toValue);
+
+        if (fromCode) params.set('from', fromCode);
+        if (toCode) params.set('to', toCode);
+
+        if (departureDateValue) {
+            params.set('departure_date', departureDateValue);
+        }
+
+        if (isRoundTrip) {
+            params.set('trip_type', 'roundtrip');
+
+            if (returnDateValue) {
+                params.set('return_date', returnDateValue);
+            }
+        } else {
+            params.set('trip_type', 'oneway');
+        }
+
+        window.location.href = '/flightsearch?' + params.toString();
     });
 }
-// 
+
 
 
 // 

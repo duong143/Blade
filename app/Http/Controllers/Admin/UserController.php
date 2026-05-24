@@ -3,115 +3,69 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
+use App\Services\Admin\UserService;
 
 class UserController extends Controller
 {
+    public function __construct(
+        protected UserService $userService
+    ) {}
+
     public function index()
     {
-        $users = User::latest()->get();
+        $users = $this->userService->getAllUsers();
+
         return view('admin.users.index', compact('users'));
     }
 
     public function create()
     {
-        $roles = Role::orderBy('name')->pluck('name');
+        $roles = $this->userService->getRoleNames();
+
         return view('admin.users.create', compact('roles'));
     }
 
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $rules = [
-            'phone' => 'required|unique:users,phone',
-            'password' => 'required|min:6',
-            'name' => 'nullable|string',
-            'email' => 'nullable|email|unique:users,email',
-        ];
+        $this->userService->createUser($request->validated());
 
-        // Chỉ admin (hoặc người có quyền roles.edit) mới được gán role
-        if (Auth::check() && Gate::allows('roles.edit')) {
-            $rules['role'] = 'nullable|string|exists:roles,name';
-        }
-
-        $request->validate($rules);
-
-        $user = User::create([
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-            'name' => $request->name ?? null,
-            'email' => $request->email ?? null,
-        ]);
-
-        if (Auth::check() && Gate::allows('roles.edit') && $request->filled('role')) {
-            $user->assignRole($request->role);
-        }
-
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
-
-        return redirect()->route('admin.users.index')
+        return redirect()
+            ->route('admin.users.index')
             ->with('success', 'Tạo user thành công');
     }
 
     public function edit(User $user)
     {
-        $roles = Role::orderBy('name')->pluck('name');
+        $roles = $this->userService->getRoleNames();
         $currentRole = $user->getRoleNames()->first();
+
         return view('admin.users.edit', compact('user', 'roles', 'currentRole'));
     }
 
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $rules = [
-            'phone' => 'required|unique:users,phone,' . $user->id,
-            'name' => 'nullable|string',
-            'email' => 'nullable|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|min:6',
-        ];
+        $this->userService->updateUser($user, $request->validated());
 
-        // Chỉ admin (hoặc người có quyền roles.edit) mới được đổi role
-        if (Auth::check() && Gate::allows('roles.edit')) {
-            $rules['role'] = 'nullable|string|exists:roles,name';
-        }
-
-        $request->validate($rules);
-
-        $data = [
-            'phone' => $request->phone,
-            'name'  => $request->name ?? null,
-            'email' => $request->email ?? null,
-        ];
-
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
-        }
-
-        $user->update($data);
-
-        // Chỉ người có quyền roles.edit mới được đổi role
-        if (Auth::check() && Gate::allows('roles.edit')) {
-            // nếu chọn role => syncRoles, nếu bỏ trống => xoá role
-            if ($request->filled('role')) {
-                $user->syncRoles([$request->role]);
-            } else {
-                $user->syncRoles([]);
-            }
-        }
-
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
-
-        return redirect()->route('admin.users.index')
+        return redirect()
+            ->route('admin.users.index')
             ->with('success', 'Cập nhật thành công');
     }
 
     public function destroy(User $user)
     {
-        $user->delete();
+        $this->userService->deleteUser($user);
+
+        if (request()->is('api/*')) {
+            return response()->json([
+                'data' => null,
+                'message' => 'User deleted successfully',
+                'status' => 200,
+            ], 200);
+        }
+
         return back()->with('success', 'Đã xoá user');
     }
 }

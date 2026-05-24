@@ -2,6 +2,102 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/payment.css') }}">
+<style>
+    .payment-qr-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: none;
+    }
+
+    .payment-qr-modal.is-open {
+        display: block;
+    }
+
+    .payment-qr-modal__overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+    }
+
+    .payment-qr-modal__dialog {
+        position: relative;
+        width: min(92vw, 520px);
+        max-height: 88vh;
+        margin: 4vh auto 0;
+        background: #fff;
+        border-radius: 14px;
+        padding: 28px 28px 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        z-index: 2;
+        overflow-y: auto;
+    }
+
+    .payment-qr-modal__close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 8px;
+        background: #2f5fd0;
+        color: #fff;
+        font-size: 24px;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .payment-qr-modal__title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2d3d;
+        margin-bottom: 12px;
+    }
+
+    .payment-qr-modal__desc {
+        font-size: 16px;
+        color: #5b6575;
+        margin-bottom: 18px;
+    }
+
+    .payment-qr-modal__info {
+        background: #f8f9fb;
+        border: 1px solid #e6e8ee;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 18px;
+        line-height: 1.9;
+        color: #1f2d3d;
+    }
+
+    .payment-qr-modal__qr {
+        text-align: center;
+        margin-bottom: 18px;
+    }
+
+    .payment-qr-modal__qr img {
+        max-width: 240px;
+        width: 100%;
+        height: auto;
+    }
+
+    .payment-qr-modal__form {
+        text-align: center;
+    }
+
+    .payment-qr-modal__submit {
+        min-width: 240px;
+        border: 0;
+        border-radius: 8px;
+        background: #4f8df0;
+        color: #fff;
+        font-weight: 700;
+        font-size: 18px;
+        padding: 14px 20px;
+        cursor: pointer;
+    }
+</style>
 @endpush
 
 @section('info-strip')
@@ -10,21 +106,24 @@
 
 @section('content')
 @php
-$startDateText = $booking->departure?->start_date ? $booking->departure->start_date->format('d/m/Y') : '--';
-$endDateText = $booking->departure?->end_date ? $booking->departure->end_date->format('d/m/Y') : '--';
+$startDateText = $booking->travel_start_date ? $booking->travel_start_date->format('d/m/Y') : '--';
+$endDateText = $booking->travel_end_date ? $booking->travel_end_date->format('d/m/Y') : '--';
 
 $routeText = trim(collect([
 $booking->combo?->from_location,
 $booking->combo?->to_location,
 ])->filter()->implode(' - '));
 
-$selectedPaymentMethod = old('payment_method', $booking->payment_method ?: 'vnpt');
+$selectedPaymentMethod = old('payment_method', $booking->payment_method ?: 'vnpt wallet');
 
 $paymentExpiredAtTimestamp = $booking->payment_expired_at
 ? $booking->payment_expired_at->timestamp * 1000
 : 0;
 
 $isExpired = $booking->payment_expired_at && now()->greaterThan($booking->payment_expired_at);
+$isPaid = $booking->payment_status === 'paid';
+$shouldShowQrModal = !$isExpired && !$isPaid && !empty($booking->payment_method);
+
 @endphp
 
 <div class="payment-page">
@@ -94,7 +193,7 @@ $isExpired = $booking->payment_expired_at && now()->greaterThan($booking->paymen
                 </div>
             </div>
 
-            <div class="payment-order-right">
+            <div class="payment-order-card__right payment-order-right">
                 <div class="payment-order-time">
 
                     @if($isExpired)
@@ -113,10 +212,9 @@ $isExpired = $booking->payment_expired_at && now()->greaterThan($booking->paymen
 
                 </div>
 
-
                 <div class="payment-order-amount">
                     Cần thanh toán:
-                    <span>{{ number_format($booking->total_amount, 0, ',', '.') }} VND</span>
+                    <span>{{ number_format($booking->final_amount, 0, ',', '.') }} VND</span>
                 </div>
             </div>
         </div>
@@ -138,7 +236,7 @@ $isExpired = $booking->payment_expired_at && now()->greaterThan($booking->paymen
                         name="payment_method"
                         value="atm"
                         {{ $selectedPaymentMethod === 'atm' ? 'checked' : '' }}>
-                    <span>Thẻ ATM tài khoản ngân hàng</span>
+                    <span>Thẻ ATM tài khoản ngân hàng (Quét mã QR SePay)</span>
                 </label>
 
                 <label class="payment-radio-row">
@@ -163,13 +261,14 @@ $isExpired = $booking->payment_expired_at && now()->greaterThan($booking->paymen
             <div class="payment-action-wrap">
                 <a
                     href="{{ route('combo.passenger', [
-                'combo_id' => $booking->combo_id,
-                'slug' => $booking->combo?->slug,
-                'departure_id' => $booking->departure_id,
-                'adult' => $booking->adult,
-                'child' => $booking->child,
-                'infant' => $booking->infant,
-            ]) }}"
+                        'combo_id' => $booking->combo_id,
+                        'slug' => $booking->combo?->slug,
+                        'departure_id' => $booking->departure_id,
+                        'selected_start_date' => optional($booking->travel_start_date)->format('Y-m-d'),
+                        'adult' => $booking->adult,
+                        'child' => $booking->child,
+                        'infant' => $booking->infant,
+                    ]) }}"
                     class="payment-btn-back">
                     <span class="back-arrow"><img src="{{ asset('images/vector.png') }}" alt=""></span>
                     Quay lại Đơn hàng
@@ -186,6 +285,77 @@ $isExpired = $booking->payment_expired_at && now()->greaterThan($booking->paymen
 
     </div>
 </div>
+
+<div
+    id="paymentQrModal"
+    class="payment-qr-modal {{ $shouldShowQrModal ? 'is-open' : '' }}"
+    aria-hidden="{{ $shouldShowQrModal ? 'false' : 'true' }}">
+
+    <div class="payment-qr-modal__overlay" id="paymentQrOverlay"></div>
+
+    <div class="payment-qr-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="paymentQrTitle">
+        <button type="button" class="payment-qr-modal__close" id="paymentQrClose">×</button>
+
+        <div class="payment-qr-modal__title" id="paymentQrTitle">
+            Thanh toán đơn hàng
+        </div>
+
+        <div class="payment-qr-modal__desc">
+            Quý khách vui lòng mở App ngân hàng quét mã QR dưới đây để thanh toán tự động qua SePay.
+        </div>
+
+        <div class="payment-qr-modal__info">
+            <div><strong>Mã đơn hàng:</strong> {{ $booking->booking_code }}</div>
+            <div><strong>Số tiền:</strong> {{ number_format($booking->final_amount, 0, ',', '.') }} VND</div>
+            <div><strong>Nội dung CK:</strong> {{ $booking->booking_code }}</div>
+        </div>
+
+        @if(!$isExpired && !$isPaid && $booking->payment_method)
+            @php
+                // TÍCH HỢP SEPAY VIETQR ĐỘNG
+                $BANK_ID = "TPB"; // Mã chuẩn của ngân hàng TPBank
+                $ACCOUNT_NO = "20041432004"; // Số tài khoản thật của bạn
+                $TEMPLATE = "qr_only"; 
+                $AMOUNT = $booking->final_amount; 
+                $DESCRIPTION = $booking->booking_code; 
+
+                $vietQrUrl = "https://img.vietqr.io/image/{$BANK_ID}-{$ACCOUNT_NO}-{$TEMPLATE}.png?amount={$AMOUNT}&addInfo={$DESCRIPTION}";
+            @endphp
+
+            <div class="payment-qr-modal__qr" style="text-align: center;">
+                <div style="display: inline-block; padding: 10px; background: #fff; border: 1px solid #e6e8ee; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                    <img src="{{ $vietQrUrl }}" alt="QR thanh toán tự động qua SePay">
+                </div>
+                
+                <div style="background: #fff3cd; border: 1px solid #ffeeba; color: #856404; font-size: 14px; border-radius: 8px; padding: 10px 14px; text-align: left; margin: 0 auto 16px; max-width: 440px; line-height: 1.5;">
+                    <strong>⚠️ Lưu ý quan trọng khi quét mã:</strong>
+                    <ul style="margin: 4px 0 0; padding-left: 18px;">
+                        <li>Giữ nguyên nội dung chuyển khoản mặc định là: <strong style="color: #c0392b;">{{ $booking->booking_code }}</strong></li>
+                        <li>Đơn hàng sẽ tự động chuyển trạng thái ngay khi tài khoản ngân hàng của bạn báo nhận được tiền thành công.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ route('combo.payment.complete') }}" class="payment-qr-modal__form">
+                @csrf
+                <input type="hidden" name="booking_id" value="{{ $booking->id }}">
+
+                <button type="submit" class="payment-qr-modal__submit">
+                    Tôi đã thanh toán / Hoàn thành
+                </button>
+            </form>
+        @elseif($isPaid)
+            <div class="alert alert-success mt-3 mb-0">
+                Đơn hàng đã được ghi nhận thanh toán thành công.
+            </div>
+        @elseif($isExpired)
+            <div class="alert alert-danger mt-3 mb-0">
+                Đơn hàng đã hết thời gian thanh toán.
+            </div>
+        @endif
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const el = document.getElementById('paymentCountdown');
@@ -230,6 +400,24 @@ $isExpired = $booking->payment_expired_at && now()->greaterThan($booking->paymen
 
         updateTimer();
         setInterval(updateTimer, 1000);
+
+        const qrModal = document.getElementById('paymentQrModal');
+        const qrClose = document.getElementById('paymentQrClose');
+        const qrOverlay = document.getElementById('paymentQrOverlay');
+
+        function closeQrModal() {
+            if (!qrModal) return;
+            qrModal.classList.remove('is-open');
+            qrModal.setAttribute('aria-hidden', 'true');
+        }
+
+        if (qrClose) {
+            qrClose.addEventListener('click', closeQrModal);
+        }
+
+        if (qrOverlay) {
+            qrOverlay.addEventListener('click', closeQrModal);
+        }
     });
 </script>
 @endsection

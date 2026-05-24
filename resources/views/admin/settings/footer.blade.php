@@ -20,7 +20,7 @@
         @csrf
 
         <div class="mb-3">
-            <label>Email công ty</label>
+            <label>Email</label>
             <input
                 type="email"
                 name="company_email"

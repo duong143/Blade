@@ -41,7 +41,7 @@
 
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <a href="/admin" class="brand-link">
-                <span class="brand-text font-weight-light">TravelLink Admin</span>
+                <span class="brand-text font-weight-light">TourLink Admin</span>
             </a>
 
             <div class="sidebar">
@@ -85,12 +85,95 @@
                         </li>
 
                         <li class="nav-item">
-                            <a href="{{ route('admin.combo-departures.index') }}"
-                                class="nav-link {{ request()->is('admin/combo-departures*') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-calendar-alt"></i>
-                                <p>Đợt khởi hành</p>
+                            <a href="{{ route('admin.discount-codes.index') }}"
+                                class="nav-link {{ request()->is('admin/discount-codes*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-ticket-alt"></i>
+                                <p>Mã giảm giá</p>
                             </a>
                         </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('admin.combo-bookings.index') }}"
+                                class="nav-link {{ request()->is('admin/combo-bookings*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-file-invoice"></i>
+                                <p>Đơn hàng combo</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('admin.destinations.index') }}"
+                                class="nav-link {{ request()->is('admin/destinations*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-map-marked-alt "></i>
+                                <p>Điểm đến Hot</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('admin.attractions.index') }}" class="nav-link {{ request()->is('admin/attractions*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-camera-retro"></i>
+                                <p>Quản lý điểm đến</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('admin.blogs.index') }}" class="nav-link">
+                                <i class="nav-icon fas fa-book"></i>
+                                <p>Cẩm nang du lịch</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('admin.contacts.index') }}" class="nav-link {{ request()->is('admin/contacts*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-envelope"></i>
+                                <p>
+                                    Liên hệ khách hàng
+                                    {{-- Bonus: Hiện số tin nhắn chưa đọc (nếu muốn) --}}
+                                    @php
+                                    $unreadCount = \App\Models\Contact::where('is_read', false)->count();
+                                    @endphp
+                                    @if($unreadCount > 0)
+                                    <span class="right badge badge-danger">{{ $unreadCount }}</span>
+                                    @endif
+                                </p>
+                            </a>
+                        </li>
+
+                        @if(false)
+
+                        <li class="nav-item">
+                            <a href="{{ route('admin.airlines.index') }}"
+                                class="nav-link {{ request()->is('admin/airlines*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-plane"></i>
+                                <p>Hãng bay</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('admin.airports.index') }}"
+                                class="nav-link {{ request()->is('admin/airports*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-map-marker-alt"></i>
+                                <p>Sân bay</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('admin.flights.index') }}"
+                                class="nav-link {{ request()->is('admin/flights*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-plane-departure"></i>
+                                <p>Vé máy bay</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ route('admin.flight-bookings.index') }}"
+                                class="nav-link {{ request()->is('admin/flight-bookings*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                                <p>Đơn đặt vé máy bay</p>
+                            </a>
+                        </li>
+                        @endif
+
+
 
                         @if ($canSeeSystemMenu)
                         <li class="nav-item has-treeview {{ request()->is('admin/settings*') || request()->is('admin/banners*') || request()->is('admin/news*') ? 'menu-open' : '' }}">
@@ -113,7 +196,7 @@
                                     </a>
                                 </li>
                                 @endcan
-                                @can('banners.view')
+                                <!-- @can('banners.view')
                                 <li class="nav-item">
                                     <a href="{{ route('admin.banners.index') }}"
                                         class="nav-link {{ request()->is('admin/banners*') ? 'active' : '' }}">
@@ -130,7 +213,7 @@
                                         <p>Tin tức du lịch</p>
                                     </a>
                                 </li>
-                                @endcan
+                                @endcan -->
 
                             </ul>
                         </li>

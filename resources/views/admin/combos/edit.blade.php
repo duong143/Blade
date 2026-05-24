@@ -46,16 +46,33 @@
         <small class="text-muted">Ảnh này dùng ở danh sách combo và làm ảnh dự phòng nếu slider chưa có ảnh</small>
       </div>
 
-      @if(!empty($combo->content_image))
-      <div class="mb-2">
-        <label class="form-label d-block">Ảnh nội dung chi tiết hiện tại</label>
-        <img src="{{ asset('storage/' . $combo->content_image) }}" style="height:100px;width:220px;object-fit:cover;border-radius:6px;">
+      @if(!empty($combo->content_image) && is_array($combo->content_image) && count($combo->content_image))
+      <div class="mb-3">
+        <label class="form-label d-block">Danh sách ảnh nội dung chi tiết hiện tại</label>
+
+        <div class="d-flex flex-wrap gap-3">
+          @foreach($combo->content_image as $index => $detailImg)
+          <div style="width:170px; position:relative;">
+            <button
+              type="button"
+              class="btn btn-sm btn-danger delete-content-image-btn"
+              data-url="{{ route('admin.combos.content-images.destroy', ['id' => $combo->id, 'index' => $index]) }}"
+              style="position:absolute;top:6px;right:6px;width:28px;height:28px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;">
+              <i class="fas fa-times"></i>
+            </button>
+
+            <img
+              src="{{ asset('storage/' . $detailImg) }}"
+              style="width:170px;height:95px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
+          </div>
+          @endforeach
+        </div>
       </div>
       @endif
 
       <div class="mb-3">
         <label class="form-label">Đổi ảnh nội dung chi tiết (tuỳ chọn)</label>
-        <input type="file" name="content_image" class="form-control" accept="image/*">
+        <input type="file" name="content_images[]" multiple class="form-control" accept="image/*">
         <small class="text-muted">Ảnh này hiển thị ở giữa phần nội dung chi tiết combo</small>
       </div>
 
@@ -146,6 +163,193 @@
         </select>
       </div>
 
+      @php
+      $oldDepartures = old('departures');
+
+      if ($oldDepartures === null) {
+      $oldDepartures = $combo->departures->map(function ($departure) {
+      return [
+      'id' => $departure->id,
+      'start_date' => optional($departure->start_date)->format('Y-m-d'),
+      'end_date' => optional($departure->end_date)->format('Y-m-d'),
+      'capacity' => $departure->capacity,
+      'sold' => $departure->sold,
+      'status' => (int) $departure->status,
+      'prices' => [
+      'adult' => (int) ($departure->prices->firstWhere('passenger_type', 'adult')?->base_price ?? 0),
+      'child' => (int) ($departure->prices->firstWhere('passenger_type', 'child')?->base_price ?? 0),
+      'infant' => (int) ($departure->prices->firstWhere('passenger_type', 'infant')?->base_price ?? 0),
+      ],
+      'sales' => $departure->sales->map(function ($sale) {
+      return [
+      'id' => $sale->id,
+      'start_date' => optional($sale->start_date)->format('Y-m-d'),
+      'end_date' => optional($sale->end_date)->format('Y-m-d'),
+      'sale_percent' => $sale->sale_percent,
+      'sale_label' => $sale->sale_label,
+      ];
+      })->values()->toArray(),
+      ];
+      })->values()->toArray();
+      }
+
+      if (empty($oldDepartures)) {
+      $oldDepartures = [[
+      'start_date' => '',
+      'end_date' => '',
+      'capacity' => 1,
+      'sold' => 0,
+      'status' => 1,
+      'prices' => [
+      'adult' => 0,
+      'child' => 0,
+      'infant' => 0,
+      ],
+      'sales' => [],
+      ]];
+      }
+      @endphp
+
+      <hr>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Khách được chọn đi từ ngày</h4>
+        <button type="button" class="btn btn-sm btn-primary" id="add-departure-btn">+ Thêm đợt khởi hành</button>
+      </div>
+
+      <div id="departures-wrapper">
+        @foreach($oldDepartures as $departureIndex => $departure)
+        <div class="card mb-4 departure-item">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Đợt khởi hành <span class="departure-number">{{ $departureIndex + 1 }}</span></strong>
+            <button type="button" class="btn btn-sm btn-danger remove-departure-btn">Xóa đợt này</button>
+          </div>
+
+          <div class="card-body">
+            @if(!empty($departure['id']))
+            <input type="hidden" name="departures[{{ $departureIndex }}][id]" value="{{ $departure['id'] }}">
+            @endif
+
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Khách được chọn đi từ ngày</label>
+                <input type="date" name="departures[{{ $departureIndex }}][start_date]" class="form-control"
+                  value="{{ $departure['start_date'] ?? '' }}" required>
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Khách được chọn đi đến ngày</label>
+                <input type="date" name="departures[{{ $departureIndex }}][end_date]" class="form-control"
+                  value="{{ $departure['end_date'] ?? '' }}">
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Số lượng</label>
+                <input type="number" name="departures[{{ $departureIndex }}][capacity]" class="form-control"
+                  value="{{ $departure['capacity'] ?? 1 }}" min="1" required>
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Đã bán</label>
+                <input type="number" name="departures[{{ $departureIndex }}][sold]" class="form-control"
+                  value="{{ $departure['sold'] ?? 0 }}" min="0">
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Trạng thái</label>
+                <select name="departures[{{ $departureIndex }}][status]" class="form-select">
+                  <option value="1" {{ (string)($departure['status'] ?? 1) === '1' ? 'selected' : '' }}>Hiển thị</option>
+                  <option value="0" {{ (string)($departure['status'] ?? 1) === '0' ? 'selected' : '' }}>Ẩn</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="border rounded p-3 mb-3">
+              <h5>Giá theo loại khách</h5>
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Người lớn</label>
+                  <input type="number" name="departures[{{ $departureIndex }}][prices][adult]" class="form-control"
+                    value="{{ $departure['prices']['adult'] ?? 0 }}" min="0" required>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Trẻ em</label>
+                  <input type="number" name="departures[{{ $departureIndex }}][prices][child]" class="form-control"
+                    value="{{ $departure['prices']['child'] ?? 0 }}" min="0" required>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Em bé</label>
+                  <input type="number" name="departures[{{ $departureIndex }}][prices][infant]" class="form-control"
+                    value="{{ $departure['prices']['infant'] ?? 0 }}" min="0" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="border rounded p-3">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Sale theo khoảng ngày</h5>
+                <button type="button" class="btn btn-sm btn-outline-primary add-sale-btn">+ Thêm sale</button>
+              </div>
+
+              <div class="sales-wrapper">
+                @foreach(($departure['sales'] ?? []) as $saleIndex => $sale)
+                <div class="border rounded p-3 mb-3 sale-item">
+                  @if(!empty($sale['id']))
+                  <input type="hidden"
+                    name="departures[{{ $departureIndex }}][sales][{{ $saleIndex }}][id]"
+                    value="{{ $sale['id'] }}">
+                  @endif
+
+                  <div class="row">
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">Từ ngày</label>
+                      <input type="date"
+                        name="departures[{{ $departureIndex }}][sales][{{ $saleIndex }}][start_date]"
+                        class="form-control"
+                        value="{{ $sale['start_date'] ?? '' }}">
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">Đến ngày</label>
+                      <input type="date"
+                        name="departures[{{ $departureIndex }}][sales][{{ $saleIndex }}][end_date]"
+                        class="form-control"
+                        value="{{ $sale['end_date'] ?? '' }}">
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                      <label class="form-label">% Sale</label>
+                      <input type="number"
+                        name="departures[{{ $departureIndex }}][sales][{{ $saleIndex }}][sale_percent]"
+                        class="form-control"
+                        value="{{ $sale['sale_percent'] ?? 0 }}"
+                        min="0"
+                        max="100">
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">Nhãn sale</label>
+                      <input type="text"
+                        name="departures[{{ $departureIndex }}][sales][{{ $saleIndex }}][sale_label]"
+                        class="form-control"
+                        value="{{ $sale['sale_label'] ?? '' }}"
+                        placeholder="VD: Flash Sale">
+                    </div>
+
+                    <div class="col-md-1 mb-3 d-flex align-items-end">
+                      <button type="button" class="btn btn-sm btn-danger remove-sale-btn w-100">Xóa</button>
+                    </div>
+                  </div>
+                </div>
+                @endforeach
+              </div>
+            </div>
+          </div>
+        </div>
+        @endforeach
+      </div>
+
       <div class="mt-3">
         <button class="btn btn-primary">Cập nhật</button>
         <a href="{{ route('admin.combos.index') }}" class="btn btn-secondary">Quay lại</a>
@@ -169,5 +373,211 @@
       form.submit();
     });
   });
+
+  document.querySelectorAll('.delete-content-image-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (!confirm('Xóa ảnh nội dung chi tiết này?')) return;
+
+      const form = document.getElementById('deleteImageForm');
+      form.action = this.dataset.url;
+      form.submit();
+    });
+  });
+
+      (function() {
+        const departuresWrapper = document.getElementById('departures-wrapper');
+        const addDepartureBtn = document.getElementById('add-departure-btn');
+
+        function reindexDepartures() {
+          const departureItems = departuresWrapper.querySelectorAll('.departure-item');
+
+          departureItems.forEach((departureItem, departureIndex) => {
+            const numberEl = departureItem.querySelector('.departure-number');
+            if (numberEl) {
+              numberEl.textContent = departureIndex + 1;
+            }
+
+            departureItem.querySelectorAll('input, select, textarea').forEach((field) => {
+              if (!field.name) return;
+
+              field.name = field.name.replace(/departures\[\d+\]/, `departures[${departureIndex}]`);
+            });
+
+            const saleItems = departureItem.querySelectorAll('.sale-item');
+            saleItems.forEach((saleItem, saleIndex) => {
+              saleItem.querySelectorAll('input, select, textarea').forEach((field) => {
+                if (!field.name) return;
+
+                field.name = field.name.replace(/sales\[\d+\]/, `sales[${saleIndex}]`);
+              });
+            });
+          });
+        }
+
+        function createSaleHtml(departureIndex, saleIndex) {
+          return `
+        <div class="border rounded p-3 mb-3 sale-item">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Từ ngày</label>
+              <input type="date"
+                name="departures[${departureIndex}][sales][${saleIndex}][start_date]"
+                class="form-control">
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Đến ngày</label>
+              <input type="date"
+                name="departures[${departureIndex}][sales][${saleIndex}][end_date]"
+                class="form-control">
+            </div>
+
+            <div class="col-md-2 mb-3">
+              <label class="form-label">% Sale</label>
+              <input type="number"
+                name="departures[${departureIndex}][sales][${saleIndex}][sale_percent]"
+                class="form-control"
+                value="0"
+                min="0"
+                max="100">
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Nhãn sale</label>
+              <input type="text"
+                name="departures[${departureIndex}][sales][${saleIndex}][sale_label]"
+                class="form-control"
+                placeholder="VD: Flash Sale">
+            </div>
+
+            <div class="col-md-1 mb-3 d-flex align-items-end">
+              <button type="button" class="btn btn-sm btn-danger remove-sale-btn w-100">Xóa</button>
+            </div>
+          </div>
+        </div>
+      `;
+        }
+
+        function createDepartureHtml(departureIndex) {
+          return `
+        <div class="card mb-4 departure-item">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Đợt khởi hành <span class="departure-number">${departureIndex + 1}</span></strong>
+            <button type="button" class="btn btn-sm btn-danger remove-departure-btn">Xóa đợt này</button>
+          </div>
+
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Ngày đi</label>
+                <input type="date" name="departures[${departureIndex}][start_date]" class="form-control" required>
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Ngày về</label>
+                <input type="date" name="departures[${departureIndex}][end_date]" class="form-control">
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Số lượng</label>
+                <input type="number" name="departures[${departureIndex}][capacity]" class="form-control" value="1" min="1" required>
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Đã bán</label>
+                <input type="number" name="departures[${departureIndex}][sold]" class="form-control" value="0" min="0">
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Trạng thái</label>
+                <select name="departures[${departureIndex}][status]" class="form-select">
+                  <option value="1" selected>Hiển thị</option>
+                  <option value="0">Ẩn</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="border rounded p-3 mb-3">
+              <h5>Giá theo loại khách</h5>
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Người lớn</label>
+                  <input type="number" name="departures[${departureIndex}][prices][adult]" class="form-control" value="0" min="0" required>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Trẻ em</label>
+                  <input type="number" name="departures[${departureIndex}][prices][child]" class="form-control" value="0" min="0" required>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Em bé</label>
+                  <input type="number" name="departures[${departureIndex}][prices][infant]" class="form-control" value="0" min="0" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="border rounded p-3">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Sale theo khoảng ngày</h5>
+                <button type="button" class="btn btn-sm btn-outline-primary add-sale-btn">+ Thêm sale</button>
+              </div>
+
+              <div class="sales-wrapper"></div>
+            </div>
+          </div>
+        </div>
+      `;
+        }
+
+        addDepartureBtn.addEventListener('click', function() {
+          const departureIndex = departuresWrapper.querySelectorAll('.departure-item').length;
+          departuresWrapper.insertAdjacentHTML('beforeend', createDepartureHtml(departureIndex));
+        });
+
+        document.addEventListener('click', function(e) {
+          if (e.target.classList.contains('remove-departure-btn')) {
+            const departureItems = departuresWrapper.querySelectorAll('.departure-item');
+
+            if (departureItems.length <= 1) {
+              alert('Combo phải có ít nhất 1 đợt khởi hành.');
+              return;
+            }
+
+            e.target.closest('.departure-item').remove();
+            reindexDepartures();
+          }
+
+          if (e.target.classList.contains('add-sale-btn')) {
+            const departureItem = e.target.closest('.departure-item');
+            const departureIndex = Array.from(departuresWrapper.querySelectorAll('.departure-item')).indexOf(departureItem);
+            const salesWrapper = departureItem.querySelector('.sales-wrapper');
+            const saleIndex = salesWrapper.querySelectorAll('.sale-item').length;
+
+            salesWrapper.insertAdjacentHTML('beforeend', createSaleHtml(departureIndex, saleIndex));
+          }
+
+          if (e.target.classList.contains('remove-sale-btn')) {
+            e.target.closest('.sale-item').remove();
+            reindexDepartures();
+          }
+        });
+      })();
+</script>
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+
+<script>
+  function initEditor(selector) {
+    ClassicEditor
+      .create(document.querySelector(selector))
+      .catch(error => {
+        console.error(error);
+      });
+  }
+
+  initEditor('textarea[name="short_desc"]');
+  initEditor('textarea[name="description"]');
+  initEditor('textarea[name="itinerary_detail"]');
+  initEditor('textarea[name="hotel_amenities"]');
 </script>
 @endsection

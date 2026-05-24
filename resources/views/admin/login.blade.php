@@ -17,7 +17,7 @@
     <div class="login-box">
 
         <div class="login-logo">
-            <b>TravelLink</b> Admin
+            <b>TourLink</b> Admin
         </div>
 
         <div class="card">

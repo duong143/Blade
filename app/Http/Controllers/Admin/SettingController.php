@@ -3,37 +3,28 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\UpdateFooterSettingRequest;
+use App\Services\Admin\SettingService;
 
 class SettingController extends Controller
 {
+    public function __construct(
+        protected SettingService $settingService
+    ) {}
+
     public function editFooter()
     {
-        $settings = Setting::where('group', 'footer')
-            ->pluck('value', 'key');
+        $settings = $this->settingService->getSettingsByGroup('footer');
 
         return view('admin.settings.footer', compact('settings'));
     }
 
-    public function updateFooter(Request $request)
+    public function updateFooter(UpdateFooterSettingRequest $request)
     {
-        $data = $request->only([
-            'company_email',
-            'company_phone',
-            'company_address',
-        ]);
+        $this->settingService->updateFooterSettings($request->validated());
 
-        foreach ($data as $key => $value) {
-            Setting::updateOrCreate(
-                ['key' => $key],
-                [
-                    'value' => $value,
-                    'group' => 'footer',
-                ]
-            );
-        }
-
-        return redirect()->back()->with('success', 'Cập nhật footer thành công');
+        return redirect()
+            ->back()
+            ->with('success', 'Cập nhật footer thành công');
     }
 }

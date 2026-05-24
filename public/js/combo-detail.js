@@ -1,59 +1,81 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const gallery = document.querySelector('.combo-detail-gallery');
-    if (!gallery) return;
+    function initSlider(config) {
+        const gallery = document.querySelector(config.gallerySelector);
+        if (!gallery) return;
 
-    const track = gallery.querySelector('.combo-detail-track');
-    const slides = gallery.querySelectorAll('.combo-detail-slide');
-    const prevBtn = gallery.querySelector('.combo-detail-prev');
-    const nextBtn = gallery.querySelector('.combo-detail-next');
+        const track = gallery.querySelector(config.trackSelector);
+        const slides = gallery.querySelectorAll(config.slideSelector);
+        const prevBtn = gallery.querySelector(config.prevSelector);
+        const nextBtn = gallery.querySelector(config.nextSelector);
 
-    if (!track || !slides.length || !prevBtn || !nextBtn) return;
+        if (!track || !slides.length || !prevBtn || !nextBtn) return;
 
-    let currentIndex = 0;
+        let currentIndex = 0;
 
-    function getStep() {
-        if (window.innerWidth <= 767.98) {
+        function getStep() {
+            if (typeof config.getStep === 'function') {
+                return config.getStep();
+            }
             return 1;
         }
-        return 3;
-    }
 
-    function getSlideWidth() {
-        const firstSlide = slides[0];
-        if (!firstSlide) return 0;
+        function getSlideWidth() {
+            const firstSlide = slides[0];
+            if (!firstSlide) return 0;
 
-        const slideWidth = firstSlide.getBoundingClientRect().width;
-        const trackStyle = window.getComputedStyle(track);
-        const gap = parseFloat(trackStyle.columnGap || trackStyle.gap || 0);
+            const slideWidth = firstSlide.getBoundingClientRect().width;
+            const trackStyle = window.getComputedStyle(track);
+            const gap = parseFloat(trackStyle.columnGap || trackStyle.gap || 0);
 
-        return slideWidth + gap;
-    }
+            return slideWidth + gap;
+        }
 
-    function updateSlider() {
-        const stepWidth = getSlideWidth();
-        track.style.transform = `translateX(-${currentIndex * stepWidth}px)`;
+        function updateSlider() {
+            const stepWidth = getSlideWidth();
+            track.style.transform = `translateX(-${currentIndex * stepWidth}px)`;
 
-        prevBtn.disabled = currentIndex <= 0;
+            prevBtn.disabled = currentIndex <= 0;
 
-        const maxIndex = Math.max(0, slides.length - getStep());
-        nextBtn.disabled = currentIndex >= maxIndex;
-    }
+            const maxIndex = Math.max(0, slides.length - getStep());
+            nextBtn.disabled = currentIndex >= maxIndex;
+        }
 
-    prevBtn.addEventListener('click', function () {
-        currentIndex = Math.max(0, currentIndex - 1);
+        prevBtn.addEventListener('click', function () {
+            currentIndex = Math.max(0, currentIndex - 1);
+            updateSlider();
+        });
+
+        nextBtn.addEventListener('click', function () {
+            const maxIndex = Math.max(0, slides.length - getStep());
+            currentIndex = Math.min(maxIndex, currentIndex + 1);
+            updateSlider();
+        });
+
+        window.addEventListener('resize', updateSlider);
         updateSlider();
+    }
+
+    initSlider({
+        gallerySelector: '.combo-detail-gallery',
+        trackSelector: '.combo-detail-track',
+        slideSelector: '.combo-detail-slide',
+        prevSelector: '.combo-detail-prev',
+        nextSelector: '.combo-detail-next',
+        getStep: function () {
+            return window.innerWidth <= 767.98 ? 1 : 3;
+        }
     });
 
-    nextBtn.addEventListener('click', function () {
-        const maxIndex = Math.max(0, slides.length - getStep());
-        currentIndex = Math.min(maxIndex, currentIndex + 1);
-        updateSlider();
+    initSlider({
+        gallerySelector: '.combo-content-gallery',
+        trackSelector: '.combo-content-track',
+        slideSelector: '.combo-content-slide',
+        prevSelector: '.combo-content-prev',
+        nextSelector: '.combo-content-next',
+        getStep: function () {
+            return 1;
+        }
     });
-
-    window.addEventListener('resize', updateSlider);
-
-    updateSlider();
-
 
     const saleCountdown = document.getElementById('comboSaleCountdown');
 
@@ -152,7 +174,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-
     const departureTrigger = document.getElementById('comboDepartureTrigger');
     const departureTriggerText = document.getElementById('comboDepartureTriggerText');
     const departureMenu = document.getElementById('comboDepartureMenu');
@@ -188,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateDepartureUI(item) {
         const triggerDateText = item.dataset.date || 'Chưa có ngày khởi hành';
-        const rangeLabel = item.dataset.rangeLabel || item.dataset.date || 'Chưa có ngày khởi hành';
         const remainingSlots = item.dataset.remainingSlots || '--';
         const sold = item.dataset.sold || '--';
         const salePercent = parseInt(item.dataset.salePercent || '0', 10);
@@ -291,6 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (activeDeparture) {
             url.searchParams.set('departure_id', activeDeparture.dataset.departureId || '');
+            url.searchParams.set('selected_start_date', activeDeparture.dataset.startDateValue || '');
         }
 
         url.searchParams.set('adult', adultCount);
@@ -299,20 +320,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         bookNowBtn.href = url.pathname + '?' + url.searchParams.toString();
     }
+
     updateTotal();
 
-    
     document.querySelectorAll('.combo-qty-card').forEach(card => {
-
         card.addEventListener('click', function () {
-
             document.querySelectorAll('.combo-qty-card')
                 .forEach(c => c.classList.remove('combo-qty-card-active'));
 
             this.classList.add('combo-qty-card-active');
-
         });
-
     });
-
 });

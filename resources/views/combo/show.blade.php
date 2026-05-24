@@ -15,6 +15,8 @@
 
 
 @section('content')
+
+
 @php
 $today = now()->toDateString();
 
@@ -45,6 +47,33 @@ $infantBasePrice = (int) ($defaultDeparture?->prices?->firstWhere('passenger_typ
 $infantFinalPrice = $infantBasePrice > 0
 ? (int) round($infantBasePrice * (100 - $todaySalePercent) / 100)
 : 0;
+
+$displayDiscountCode = $combo->discountCodes->first();
+
+$discountStatusText = null;
+$discountCheckinText = '--';
+$discountPercentText = '--';
+$discountCodeText = '--';
+
+if ($displayDiscountCode) {
+if ($displayDiscountCode->isExpired()) {
+$discountStatusText = '--';
+} else {
+$discountPercentText = $displayDiscountCode->discount_percent . '%';
+$discountCodeText = $displayDiscountCode->code;
+
+$discountCheckinText =
+($displayDiscountCode->checkin_from ? $displayDiscountCode->checkin_from->format('d/m') : '--')
+. ' - ' .
+($displayDiscountCode->checkin_to ? $displayDiscountCode->checkin_to->format('d/m') : '--');
+
+if ($displayDiscountCode->isInValidTime()) {
+$discountStatusText = null;
+} else {
+$discountStatusText = 'Chưa đến thời gian áp dụng';
+}
+}
+}
 @endphp
 
 <div class="container-fluid px-0 mt-1">
@@ -153,7 +182,7 @@ $infantFinalPrice = $infantBasePrice > 0
                     <h6 class="fw-bold text-primary">Tiện nghi khách sạn</h6>
                     <div class="small text-muted">
                         @if(!empty($combo->hotel_amenities))
-                        {!! nl2br(e($combo->hotel_amenities)) !!}
+                        {!! $combo->hotel_amenities !!}
                         @else
                         <div>
                             Lịch trình: {{ $combo->duration_days }} ngày / {{ $combo->duration_nights }} đêm
@@ -167,12 +196,31 @@ $infantFinalPrice = $infantBasePrice > 0
                         @endif
                     </div>
 
-                    @if(!empty($combo->content_image))
-                    <div class="mt-3">
-                        <img
-                            src="{{ asset('storage/' . $combo->content_image) }}"
-                            alt="{{ $combo->title }}"
-                            style="width:100%; height:auto; max-height:520px; object-fit:cover; border-radius:12px; display:block;">
+                    @php
+                    $contentImages = is_array($combo->content_image) ? $combo->content_image : [];
+                    @endphp
+
+                    @if(!empty($contentImages))
+                    <div class="combo-content-gallery mt-3 shadow-sm">
+                        <button type="button" class="combo-content-nav combo-content-prev" aria-label="Ảnh trước">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+
+                        <div class="combo-content-viewport">
+                            <div class="combo-content-track">
+                                @foreach($contentImages as $img)
+                                <div class="combo-content-slide">
+                                    <img
+                                        src="{{ asset('storage/' . $img) }}"
+                                        alt="{{ $combo->title }}">
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <button type="button" class="combo-content-nav combo-content-next" aria-label="Ảnh tiếp theo">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
                     </div>
                     @else
                     <div class="mt-3" style="height:340px;background:#ddd;border-radius:12px;"></div>
@@ -181,9 +229,9 @@ $infantFinalPrice = $infantBasePrice > 0
                     <h6 class="fw-bold text-primary mt-4">Lịch trình chi tiết</h6>
                     <div class="small text-muted">
                         @if(!empty($combo->itinerary_detail))
-                        {!! nl2br(e($combo->itinerary_detail)) !!}
+                        {!! $combo->itinerary_detail !!}
                         @elseif(!empty($combo->description))
-                        {!! nl2br(e($combo->description)) !!}
+                        {!! $combo->description !!}
                         @else
                         Chưa có mô tả chi tiết.
                         @endif
@@ -217,10 +265,11 @@ $infantFinalPrice = $infantBasePrice > 0
                     <div class="combo-departure-label small text-muted">
                         Xin chọn ngày khởi hành
                     </div>
+
                     @php
-                    $defaultTriggerDate = $defaultDeparture && $defaultDeparture->start_date
+                    $defaultTriggerDate = $defaultDeparture?->start_date
                     ? $defaultDeparture->start_date->format('d/m/Y')
-                    : 'Chưa có ngày khởi hành';
+                    : now()->format('d/m/Y');
                     @endphp
 
                     <div class="combo-departure-select">
@@ -233,33 +282,50 @@ $infantFinalPrice = $infantBasePrice > 0
                         </button>
 
                         <div class="combo-departure-menu" id="comboDepartureMenu">
-                            <div class="combo-departure-menu-title">Chọn ngày khởi hành</div>
+                            <div class="combo-departure-menu-title">Chọn ngày đi phù hợp</div>
 
                             @php
-                            $displayRangeCount = 6; // muốn hiện nhiều hơn thì tăng số này
+                            $displayRangeCount = 10;
                             @endphp
 
                             @forelse($combo->departures as $dep)
                             @php
                             $depAdultBasePrice = (int) ($dep->prices->firstWhere('passenger_type', 'adult')?->base_price ?? 0);
-                            $depSalePercent = (int) ($dep->getSalePercentForDate(optional($dep->start_date)->format('Y-m-d')) ?? 0);
-                            $depAdultFinalPrice = $depAdultBasePrice > 0 ? (int) round($depAdultBasePrice * (100 - $depSalePercent) / 100) : 0;
-
                             $depChildBasePrice = (int) ($dep->prices->firstWhere('passenger_type', 'child')?->base_price ?? 0);
-                            $depChildFinalPrice = $depChildBasePrice > 0 ? (int) round($depChildBasePrice * (100 - $depSalePercent) / 100) : 0;
-
                             $depInfantBasePrice = (int) ($dep->prices->firstWhere('passenger_type', 'infant')?->base_price ?? 0);
-                            $depInfantFinalPrice = $depInfantBasePrice > 0 ? (int) round($depInfantBasePrice * (100 - $depSalePercent) / 100) : 0;
                             @endphp
 
                             @for($i = 0; $i < $displayRangeCount; $i++)
                                 @php
-                                $rangeStart=$dep->start_date ? $dep->start_date->copy()->addDays($i) : null;
-                                $rangeEnd = $rangeStart ? $rangeStart->copy()->addDays((int) ($combo->duration_days ?? 0)) : null;
+                                if (!$dep->start_date) {
+                                continue;
+                                }
 
-                                $rangeStartText = $rangeStart ? $rangeStart->format('d/m/Y') : '--';
-                                $rangeEndText = $rangeEnd ? $rangeEnd->format('d/m/Y') : '--';
+                                $rangeStart = $dep->start_date->copy()->addDays($i);
+                                $rangeEnd = $rangeStart->copy()->addDays(max(0, (int) ($combo->duration_days ?? 0) - 1));
+
+                                if ($dep->end_date && $rangeEnd->gt($dep->end_date)) {
+                                continue;
+                                }
+
+                                $rangeStartText = $rangeStart->format('d/m/Y');
+                                $rangeEndText = $rangeEnd->format('d/m/Y');
+                                $rangeStartValue = $rangeStart->format('Y-m-d');
                                 $depRangeLabel = $rangeStartText . ' - ' . $rangeEndText;
+
+                                $depSalePercent = (int) ($dep->getSalePercentForDate($rangeStartValue) ?? 0);
+
+                                $depAdultFinalPrice = $depAdultBasePrice > 0
+                                ? (int) round($depAdultBasePrice * (100 - $depSalePercent) / 100)
+                                : 0;
+
+                                $depChildFinalPrice = $depChildBasePrice > 0
+                                ? (int) round($depChildBasePrice * (100 - $depSalePercent) / 100)
+                                : 0;
+
+                                $depInfantFinalPrice = $depInfantBasePrice > 0
+                                ? (int) round($depInfantBasePrice * (100 - $depSalePercent) / 100)
+                                : 0;
 
                                 $isDefaultActive = $defaultDeparture && $defaultDeparture->id === $dep->id && $i === 0;
                                 @endphp
@@ -269,6 +335,7 @@ $infantFinalPrice = $infantBasePrice > 0
                                     class="combo-departure-item {{ $isDefaultActive ? 'active' : '' }}"
                                     data-departure-id="{{ $dep->id }}"
                                     data-date="{{ $rangeStartText }}"
+                                    data-start-date-value="{{ $rangeStartValue }}"
                                     data-range-label="{{ $depRangeLabel }}"
                                     data-remaining-slots="{{ $dep->slots_remaining }}"
                                     data-sold="{{ $dep->sold }}"
@@ -288,8 +355,6 @@ $infantFinalPrice = $infantBasePrice > 0
                                 @endforelse
                         </div>
                     </div>
-
-
 
                     <div class="combo-qty-section">
                         <div class="combo-qty-heading">Số lượng</div>
@@ -388,24 +453,42 @@ $infantFinalPrice = $infantBasePrice > 0
                             </div>
                         </div>
 
+                        @if($displayDiscountCode)
                         <div class="combo-discount-row">
                             <div class="combo-discount-text">
-                                <div>Giảm giá <span class="combo-discount-highlight">30%</span> - Mã: <span class="combo-discount-highlight">TRAVELLINK</span></div>
-                                <div>Ngày check-in: <strong>10/10 - 30/10</strong></div>
+                                <div>
+                                    Giảm giá
+                                    <span class="combo-discount-highlight">{{ $discountPercentText }}</span>
+                                    - Mã:
+                                    <span class="combo-discount-highlight">{{ $discountCodeText }}</span>
+                                </div>
+                                <div>
+                                    Ngày check-in:
+                                    <strong>{{ $discountCheckinText }}</strong>
+                                </div>
+
+                                @if($discountStatusText)
+                                <div class="text-danger mt-1">
+                                    {{ $discountStatusText }}
+                                </div>
+                                @endif
                             </div>
 
-                            <button type="button" class="combo-use-btn">Sử dụng</button>
+                            <button type="button" class="combo-use-btn" {{ $discountStatusText ? 'disabled' : '' }}>
+                                Sử dụng
+                            </button>
                         </div>
+                        @endif
                         <div class="combo-book-now-wrap">
                             <a
                                 href="{{ route('combo.passenger', [
-            'combo_id' => $combo->id,
-            'slug' => $combo->slug,
-            'departure_id' => $defaultDeparture?->id,
-            'adult' => 1,
-            'child' => 0,
-            'infant' => 0,
-        ]) }}"
+                                    'combo_id' => $combo->id,
+                                    'departure_id' => $defaultDeparture?->id,
+                                    'selected_start_date' => optional($defaultDeparture?->start_date)->format('Y-m-d'),
+                                    'adult' => 1,
+                                    'child' => 0,
+                                    'infant' => 0,
+                                ]) }}"
                                 class="btn btn-primary combo-book-now-btn"
                                 id="comboBookNowBtn">
                                 Đặt ngay

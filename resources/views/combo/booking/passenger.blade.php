@@ -26,17 +26,16 @@ if ($passengerText !== '') {
 $summarySub .= ' | ' . $passengerText;
 }
 
-$startDateText = $departure->start_date ? $departure->start_date->format('d/m/Y') : '--';
-$endDateText = $departure->end_date ? $departure->end_date->format('d/m/Y') : '--';
+$startDateText = $travelStartDate ? $travelStartDate->format('d/m/Y') : '--';
+$endDateText = $travelEndDate ? $travelEndDate->format('d/m/Y') : '--';
 
-$adultDiscount = max(0, (int) $adultBasePrice - (int) $adultFinalPrice);
-$childDiscount = max(0, (int) $childBasePrice - (int) $childFinalPrice);
-$infantDiscount = max(0, (int) $infantBasePrice - (int) $infantFinalPrice);
+$saleDiscountAmount =
+($adult * max(0, (int) $adultBasePrice - (int) $adultFinalPrice)) +
+($child * max(0, (int) $childBasePrice - (int) $childFinalPrice)) +
+($infant * max(0, (int) $infantBasePrice - (int) $infantFinalPrice));
 
-$discountAmount =
-($adult * $adultDiscount) +
-($child * $childDiscount) +
-($infant * $infantDiscount);
+$couponDiscountAmount = 0;
+$payableAmount = $totalAmount;
 @endphp
 
 <div class="passenger-page">
@@ -80,7 +79,7 @@ $discountAmount =
             {{-- LEFT --}}
             <div class="col-lg-8">
 
-                <form method="POST" action="{{ route('combo.passenger.store') }}">
+                <form method="POST" action="{{ route('combo.passenger.store') }}" id="passengerForm">
                     @csrf
 
                     <input type="hidden" name="combo_id" value="{{ $combo->id }}">
@@ -89,6 +88,13 @@ $discountAmount =
                     <input type="hidden" name="adult" value="{{ $adult }}">
                     <input type="hidden" name="child" value="{{ $child }}">
                     <input type="hidden" name="infant" value="{{ $infant }}">
+
+                    <input type="hidden" name="travel_start_date" value="{{ $travelStartDate->format('Y-m-d') }}">
+                    <input type="hidden" name="travel_end_date" value="{{ $travelEndDate->format('Y-m-d') }}">
+
+                    <input type="hidden" name="coupon_code" id="couponCodeHidden" value="{{ old('coupon_code') }}">
+                    <input type="hidden" name="discount_code_id" id="discountCodeIdHidden">
+                    <input type="hidden" name="discount_code_amount" id="discountCodeAmountHidden" value="0">
 
                     {{-- CONTACT --}}
                     <div class="bg-white rounded-3 shadow-sm p-4">
@@ -277,17 +283,16 @@ $discountAmount =
                             <span>{{ $totalPassengers }}</span>
                         </div>
 
-                        <div class="booking-summary-row">
-                            <span>Giảm giá:</span>
-
-                            <span class="booking-summary-discount">
-
-                                {{ $discountAmount > 0
-                                ? '-' . number_format($discountAmount,0,',','.') . 'đ'
-                                : '0đ' }}
-
+                        <!-- <div class="booking-summary-row">
+                            <span>Giảm sale:</span>
+                            <span class="booking-summary-discount" id="saleDiscountText">
+                                {{ $saleDiscountAmount > 0 ? '-' . number_format($saleDiscountAmount, 0, ',', '.') . 'đ' : '0đ' }}
                             </span>
+                        </div> -->
 
+                        <div class="booking-summary-row">
+                            <span>Mã giảm giá:</span>
+                            <span class="booking-summary-discount" id="couponDiscountText">0đ</span>
                         </div>
 
                         <div class="booking-summary-total-row">
@@ -298,7 +303,7 @@ $discountAmount =
 
                             <div class="booking-summary-total-right">
 
-                                <div class="booking-summary-total-price">
+                                <div class="booking-summary-total-price" id="payableAmountText">
                                     {{ number_format($totalAmount,0,',','.') }}đ
                                 </div>
 
@@ -327,38 +332,112 @@ $discountAmount =
 
                 {{-- COUPON --}}
                 <div class="booking-coupon-card">
-
                     <div class="booking-coupon-title">
                         Mã giảm giá
                     </div>
 
                     <div class="booking-coupon-form">
-
                         <input
                             type="text"
                             class="form-control"
-                            placeholder="Nhập mã">
+                            placeholder="Nhập mã"
+                            id="couponCodeInput"
+                            name="coupon_code_visible"
+                            value="{{ old('coupon_code') }}"
+                            form="passengerForm">
 
                         <button
                             type="button"
-                            class="booking-coupon-btn">
-
+                            class="booking-coupon-btn"
+                            id="applyCouponBtn">
                             Áp dụng
-
                         </button>
-
                     </div>
 
-                    <div class="booking-coupon-note">
-                        Mã giảm giá hợp lệ. Giảm thêm 1.000.000đ vào tổng giá vé
+                    <div class="booking-coupon-note" id="couponMessageBox">
+                        @error('coupon_code')
+                        {{ $message }}
+                        @else
+                        Nhập mã giảm giá để áp dụng ưu đãi.
+                        @enderror
                     </div>
-
                 </div>
-
             </div>
-
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const applyBtn = document.getElementById('applyCouponBtn');
+        const couponInput = document.getElementById('couponCodeInput');
+        const couponCodeHidden = document.getElementById('couponCodeHidden');
+        const discountCodeIdHidden = document.getElementById('discountCodeIdHidden');
+        const discountCodeAmountHidden = document.getElementById('discountCodeAmountHidden');
+        const couponMessageBox = document.getElementById('couponMessageBox');
+        const couponDiscountText = document.getElementById('couponDiscountText');
+        const payableAmountText = document.getElementById('payableAmountText');
 
+        function formatMoney(value) {
+            return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
+        }
+
+        if (!applyBtn) return;
+
+        applyBtn.addEventListener('click', function() {
+            const couponCode = (couponInput.value || '').trim();
+
+            couponCodeHidden.value = couponCode;
+            discountCodeIdHidden.value = '';
+            discountCodeAmountHidden.value = '0';
+
+            fetch("{{ route('combo.discount-code.validate') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        combo_id: "{{ $combo->id }}",
+                        departure_id: "{{ $departure->id }}",
+                        travel_start_date: "{{ $travelStartDate->format('Y-m-d') }}",
+                        adult: "{{ $adult }}",
+                        child: "{{ $child }}",
+                        infant: "{{ $infant }}",
+                        coupon_code: couponCode
+                    })
+                })
+                .then(async function(response) {
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw data;
+                    }
+
+                    return data;
+                })
+                .then(function(data) {
+                    couponCodeHidden.value = data.discount_code;
+                    discountCodeIdHidden.value = data.discount_code_id;
+                    discountCodeAmountHidden.value = data.discount_amount;
+
+                    couponDiscountText.textContent = '-' + formatMoney(data.discount_amount);
+                    payableAmountText.textContent = formatMoney(data.payable_amount);
+                    couponMessageBox.textContent = data.message;
+                    couponMessageBox.classList.remove('text-danger');
+                    couponMessageBox.classList.add('text-success');
+                })
+                .catch(function(error) {
+                    couponDiscountText.textContent = '0đ';
+                    payableAmountText.textContent = "{{ number_format($payableAmount, 0, ',', '.') }}đ";
+
+                    const message = error?.message || 'Mã đã sai, vui lòng thực hiện lại.';
+                    couponMessageBox.textContent = message;
+                    couponMessageBox.classList.remove('text-success');
+                    couponMessageBox.classList.add('text-danger');
+                });
+        });
+    });
+</script>
 @endsection

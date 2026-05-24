@@ -1,10 +1,71 @@
-
 const sortTrigger = document.querySelector(".sort-trigger");
 const sortDropdown = document.querySelector(".sort-dropdown");
 const sortLabel = document.querySelector(".sort-label");
 
-if (sortTrigger && sortDropdown) {
+let departureFlightsData = Array.isArray(window.departureFlightCards) ? [...window.departureFlightCards] : [];
+let returnFlightsData = Array.isArray(window.returnFlightCards) ? [...window.returnFlightCards] : [];
 
+const defaultConditionLabels = [
+    "Hành lý xách tay",
+    "Hành lý ký gửi",
+    "Suất ăn",
+    "Thay đổi chuyến bay",
+    "Đổi tên",
+    "Hoàn vé",
+    "Chọn ghế ngồi",
+    "Phòng chờ thương gia",
+    "Quầy thủ tục ưu tiên"
+];
+
+function parsePriceText(priceText) {
+    if (!priceText) return 0;
+    return parseInt(String(priceText).replace(/[^\d]/g, ""), 10) || 0;
+}
+
+function timeToMinutes(timeText) {
+    if (!timeText || !String(timeText).includes(":")) return 0;
+    const [hours, minutes] = String(timeText).split(":").map(Number);
+    return (hours * 60) + minutes;
+}
+
+function formatPointText(pointValue) {
+    const raw = String(pointValue ?? "").trim();
+
+    if (!raw) return "";
+
+    if (raw.includes("điểm")) {
+        return raw.startsWith("+") ? raw : `+${raw}`;
+    }
+
+    const numeric = raw.replace(/[^\d]/g, "");
+    if (!numeric) return "";
+
+    return `+${numeric} điểm`;
+}
+
+function buildFullConditions(conditions) {
+    const source = Array.isArray(conditions) ? conditions : [];
+
+    return defaultConditionLabels.map(label => {
+        const found = source.find(item => String(item.label || "").trim() === label);
+
+        if (found) {
+            return {
+                label: label,
+                value: found.value || "",
+                enabled: !!found.enabled,
+            };
+        }
+
+        return {
+            label: label,
+            value: "",
+            enabled: false,
+        };
+    });
+}
+
+if (sortTrigger && sortDropdown) {
     sortTrigger.addEventListener("click", (e) => {
         e.stopPropagation();
         sortDropdown.toggleAttribute("hidden");
@@ -12,13 +73,11 @@ if (sortTrigger && sortDropdown) {
 
     sortDropdown.querySelectorAll("li").forEach(item => {
         item.addEventListener("click", () => {
-
             sortLabel.textContent = item.textContent;
             sortTrigger.dataset.sort = item.dataset.sort;
             sortTrigger.dataset.order = item.dataset.order;
-
             sortDropdown.setAttribute("hidden", true);
-
+            sortDepartureFlights(item.dataset.sort, item.dataset.order);
         });
     });
 
@@ -27,349 +86,258 @@ if (sortTrigger && sortDropdown) {
     });
 }
 
-
 const filterTrigger = document.querySelector(".filter-trigger");
-
 if (filterTrigger) {
     filterTrigger.addEventListener("click", () => {
         console.log("Toggle filter panel");
     });
 }
 
+function sortDepartureFlights(sortBy, order) {
+    departureFlightsData.sort((a, b) => {
+        let valueA = 0;
+        let valueB = 0;
+
+        if (sortBy === "price") {
+            valueA = parsePriceText(a.price);
+            valueB = parsePriceText(b.price);
+        }
+
+        if (sortBy === "time") {
+            valueA = timeToMinutes(a.departTime);
+            valueB = timeToMinutes(b.departTime);
+        }
+
+        return order === "desc" ? valueB - valueA : valueA - valueB;
+    });
+
+    renderFlights(departureFlightsData);
+}
+
 function renderFlights(flights) {
-    const container = document.querySelector(".flight-main");
+    const container = document.getElementById("flight-cards-container");
     const template = document.getElementById("flight-card-template");
+
+    if (!container || !template) {
+        console.error("Không tìm thấy flight-cards-container hoặc flight-card-template");
+        return;
+    }
+
+    container.innerHTML = "";
+
+    if (!flights.length) {
+        container.innerHTML = `
+            <div class="flight-card">
+                <div class="flight-card-body">
+                    <div style="padding: 12px 0; color: #666;">
+                        Hiện chưa có chuyến bay phù hợp cho ngày bạn chọn.
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
 
     flights.forEach(flight => {
         const clone = template.content.cloneNode(true);
         const priceBox = clone.querySelector(".ticket-price");
-        priceBox.innerHTML = "";
-        flight.priceDetail.forEach(item => {
-            const row = document.createElement("div");
-            row.className = "price-row";
-
-            row.innerHTML = `
-        <span>${item.label}</span>
-        <span>${item.value.toLocaleString("vi-VN")} VND</span>
-    `;
-
-            priceBox.appendChild(row);
-        });
-        const totalRow = document.createElement("div");
-        totalRow.className = "price-total";
-
-        totalRow.innerHTML = `
-    <span>Tổng giá vé chiều đi</span>
-    <strong>${flight.totalPrice.toLocaleString("vi-VN")} VND</strong>
-`;
         const conditionBox = clone.querySelector(".ticket-condition");
+
+        if (!priceBox || !conditionBox) {
+            console.error("Template bị thiếu .ticket-price hoặc .ticket-condition");
+            return;
+        }
+
+        priceBox.innerHTML = "";
         conditionBox.innerHTML = "";
 
-        flight.conditions.forEach(cond => {
+        (flight.priceDetail || []).forEach(item => {
+            const row = document.createElement("div");
+            row.className = "price-row";
+            row.innerHTML = `
+                <span>${item.label}</span>
+                <span>${Number(item.value || 0).toLocaleString("vi-VN")} VND</span>
+            `;
+            priceBox.appendChild(row);
+        });
+
+        const totalRow = document.createElement("div");
+        totalRow.className = "price-total";
+        totalRow.innerHTML = `
+            <span>Tổng giá vé chiều đi</span>
+            <strong>${flight.totalPriceText || flight.price || ""}</strong>
+        `;
+        priceBox.appendChild(totalRow);
+
+        const fullConditions = buildFullConditions(flight.conditions);
+        fullConditions.forEach(cond => {
             const item = document.createElement("div");
-            item.className =
-                "condition-item" + (cond.enabled ? "" : " disabled");
-
+            item.className = "condition-item" + (cond.enabled ? "" : " disabled");
             item.innerHTML = `
-    <span class="condition-icon"></span>
-    <span>${cond.label}:</span>
-    <strong>${cond.value}</strong>
-`;
-
-
+                <span class="condition-icon"></span>
+                <span>${cond.label}:</span>
+                <strong>${cond.value || ""}</strong>
+            `;
             conditionBox.appendChild(item);
         });
 
-        priceBox.appendChild(totalRow);
+        const airlineImg = clone.querySelector(".flight-airline img");
+        if (airlineImg) {
+            airlineImg.src = flight.logo || "";
+            airlineImg.alt = flight.airline || "";
+        }
 
+        const flightCode = clone.querySelector(".flight-code");
+        if (flightCode) {
+            flightCode.textContent = `${flight.airline || ""} ${flight.code || ""}`.trim();
+        }
 
+        const flightClass = clone.querySelector(".flight-class");
+        if (flightClass) {
+            flightClass.textContent = flight.class || "";
+        }
 
-        clone.querySelector(".flight-airline img").src = flight.logo;
-        clone.querySelector(".flight-code").textContent = `${flight.airline} ${flight.code}`;
-        clone.querySelector(".flight-class").textContent = flight.class;
+        const timeDepart = clone.querySelector(".time-depart");
+        const placeDepart = clone.querySelector(".place-depart");
+        const timeArrive = clone.querySelector(".time-arrive");
+        const placeArrive = clone.querySelector(".place-arrive");
+        const duration = clone.querySelector(".duration");
+        const direct = clone.querySelector(".direct");
+        const price = clone.querySelector(".price");
+        const point = clone.querySelector(".point");
+        const badge = clone.querySelector(".badge");
+        const flyTimeSpan = clone.querySelector(".fly-time span");
+        const infoDepart = clone.querySelector(".info-depart");
+        const infoDepartAirport = clone.querySelector(".info-depart-airport");
+        const infoArrive = clone.querySelector(".info-arrive");
+        const infoArriveAirport = clone.querySelector(".info-arrive-airport");
+        const aircraft = clone.querySelector(".aircraft");
+        const seatClassInfo = clone.querySelector(".seat-class");
+        const carryOn = clone.querySelector(".carry-on");
+        const checkedBag = clone.querySelector(".checked-bag");
+        const convinient = clone.querySelector(".convinient");
 
-        clone.querySelector(".time-depart").textContent = flight.departTime;
-        clone.querySelector(".place-depart").textContent = flight.departCity;
-        clone.querySelector(".time-arrive").textContent = flight.arriveTime;
-        clone.querySelector(".place-arrive").textContent = flight.arriveCity;
+        if (timeDepart) timeDepart.textContent = flight.departTime || "";
+        if (placeDepart) placeDepart.textContent = flight.departCity || "";
+        if (timeArrive) timeArrive.textContent = flight.arriveTime || "";
+        if (placeArrive) placeArrive.textContent = flight.arriveCity || "";
+        if (duration) duration.textContent = flight.duration || "";
+        if (direct) direct.textContent = flight.direct || "";
+        if (price) price.textContent = flight.price || "";
+        if (point) point.textContent = formatPointText(flight.point);
+        if (badge) badge.textContent = flight.code || "";
+        if (flyTimeSpan) flyTimeSpan.textContent = flight.duration || "";
+        if (infoDepart) infoDepart.textContent = `${flight.departTime || ""} · ${flight.departCity || ""}`;
+        if (infoDepartAirport) infoDepartAirport.textContent = flight.departAirport || "";
+        if (infoArrive) infoArrive.textContent = `${flight.arriveTime || ""} · ${flight.arriveCity || ""}`;
+        if (infoArriveAirport) infoArriveAirport.textContent = flight.arriveAirport || "";
 
-        clone.querySelector(".duration").textContent = flight.duration;
-        clone.querySelector(".direct").textContent = flight.direct;
+        const aircraftParts = [];
+        if (flight.aircraft) aircraftParts.push(flight.aircraft);
+        if (flight.seatLayout) aircraftParts.push(flight.seatLayout);
+        if (flight.seatPitch) aircraftParts.push(flight.seatPitch);
 
-        clone.querySelector(".price").textContent = flight.price;
-        clone.querySelector(".point").textContent = flight.point;
+        if (aircraft) {
+            aircraft.innerHTML = aircraftParts.length ? aircraftParts.join("<br>") : "";
+        }
 
-        clone.querySelector(".badge").textContent = flight.code;
-        clone.querySelector(".fly-time span").textContent = flight.duration;
+        if (seatClassInfo) seatClassInfo.textContent = flight.class || "";
+        if (carryOn) carryOn.textContent = flight.carryOn || "";
+        if (checkedBag) checkedBag.textContent = flight.checkedBag || "";
+        if (convinient) convinient.innerHTML = (flight.convinient || "").split(", ").join("<br>");
 
-        clone.querySelector(".info-depart").textContent = `${flight.departTime} · ${flight.departCity}`;
-        clone.querySelector(".info-depart-airport").textContent = flight.departAirport;
-        clone.querySelector(".info-arrive").textContent = `${flight.arriveTime} · ${flight.arriveCity}`;
-        clone.querySelector(".info-arrive-airport").textContent = flight.arriveAirport;
+        const card = clone.querySelector(".flight-card");
+        initFlightCardTabs(card);
 
-        clone.querySelector(".aircraft").innerHTML =
-            flight.aircraft.split(", ").join("<br>");
-        clone.querySelector(".seat-class").textContent = flight.class;
-        clone.querySelector(".carry-on").textContent = flight.carryOn;
-        clone.querySelector(".checked-bag").textContent = flight.checkedBag;
-        clone.querySelector(".convinient").innerHTML =
-            flight.convinient.split(", ").join("<br>");
-
-        initFlightCardTabs(clone.querySelector(".flight-card"));
+        const bookBtn = clone.querySelector(".btn-book");
+        if (bookBtn && flight.id) {
+            bookBtn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                window.location.href = `/flight/booking?flight_id=${flight.id}&adult=1&child=0&infant=0`;
+            });
+        }
 
         container.appendChild(clone);
     });
 }
-document.addEventListener("DOMContentLoaded", () => {
-    renderFlights(mockFlights);
-});
 
-// thông tin mẫu
-const mockFlights = [
-    {
-        airline: "Vietjet Air",
-        logo: "/images/vietjet.png",
-        code: "VJ-121",
-        class: "Economy Class",
-        departTime: "08:00",
-        departCity: "Hà Nội (HAN)",
-        departAirport: "HAN-Sân bay Nội Bài",
-        arriveTime: "10:10",
-        arriveCity: "TP HCM (SGN)",
-        arriveAirport: "SGN-Sân bay Tân Sơn Nhất",
-        duration: "2h 25m",
-        direct: "Bay thẳng",
-        price: "10.369.000 VND",
-        point: "+17 điểm",
-        aircraft: "Airbus A320, Sơ đồ ghế 3-3, Khoảng cách ghế 32 inch ( Tiêu chuẩn)",
-        carryOn: "7Kg",
-        checkedBag: "Mua thêm khi đặt chỗ",
-        convinient: "Suất ăn trên máy bay, Hệ thống giải trí, Ổ điện và cổng USB",
-        priceDetail: [
-            { label: "Người lớn (x1)", value: 599000 },
-            { label: "Thuế VAT", value: 350000 },
-            { label: "Phí dịch vụ", value: 1005000 },
-            { label: "Phí soi chiếu an ninh", value: 1005000 }
-        ],
-
-        totalPrice: 2962000,
-
-        conditions: [
-            { label: "Hành lý xách tay", value: "7kg", enabled: true },
-            { label: "Hành lý ký gửi", value: "Trả phí", enabled: true },
-            { label: "Suất ăn", value: "Đã bao gồm", enabled: true },
-            { label: "Thay đổi chuyến bay", value: "Không hỗ trợ", enabled: false },
-            { label: "Đổi tên", value: "Không hỗ trợ", enabled: false },
-            { label: "Hoàn vé", value: "Không hỗ trợ", enabled: false },
-            { label: "Chọn ghế ngồi", value: "Trả phí", enabled: false },
-            { label: "Phòng chờ thương gia", value: "Trả phí", enabled: false },
-            { label: "Quầy thủ tục ưu tiên", value: "Trả phí", enabled: false },
-
-        ]
-    },
-    {
-        airline: "Vietnam Airlines",
-        logo: "/images/vna.png",
-        code: "VN-678",
-        class: "Economy Class",
-        departTime: "09:00",
-        departCity: "Hà Nội (HAN)",
-        departAirport: "HAN-Sân bay Nội Bài",
-        arriveTime: "11:30",
-        arriveCity: "TP HCM (SGN)",
-        arriveAirport: "SGN-Sân bay Tân Sơn Nhất",
-        duration: "2h 30m",
-        direct: "Bay thẳng",
-        price: "12.150.000 VND",
-        point: "+22 điểm",
-        aircraft: "Airbus A321, Sơ đồ ghế 3-3, Khoảng cách ghế 32 inch ( Tiêu chuẩn)",
-        carryOn: "10Kg",
-        checkedBag: "20Kg",
-        convinient: "Suất ăn trên máy bay, Hệ thống giải trí, Ổ điện và cổng USB",
-        priceDetail: [
-            { label: "Người lớn (x1)", value: 599000 },
-            { label: "Thuế VAT", value: 350000 },
-            { label: "Phí dịch vụ", value: 1005000 },
-            { label: "Phí soi chiếu an ninh", value: 1005000 }
-        ],
-
-        totalPrice: 2962000,
-
-        conditions: [
-            { label: "Hành lý xách tay", value: "7kg", enabled: true },
-            { label: "Hành lý ký gửi", value: "Trả phí", enabled: true },
-            { label: "Suất ăn", value: "Đã bao gồm", enabled: true },
-            { label: "Thay đổi chuyến bay", value: "Không hỗ trợ", enabled: false },
-            { label: "Đổi tên", value: "Không hỗ trợ", enabled: false },
-            { label: "Hoàn vé", value: "Không hỗ trợ", enabled: false },
-            { label: "Chọn ghế ngồi", value: "Trả phí", enabled: false },
-            { label: "Phòng chờ thương gia", value: "Trả phí", enabled: false },
-            { label: "Quầy thủ tục ưu tiên", value: "Trả phí", enabled: false },
-        ]
-    }
-];
-
-
-//mock data chiều về
-const mockReturnFlights = [
-    {
-        airline: "Bamboo Airways",
-        logo: "/images/bamboo.png",
-        departTime: "08:00",
-        arriveTime: "10:10",
-        duration: "2h 25m",
-        from: "Hà Nội (HAN)",
-        to: "TP HCM (SGN)",
-        duration: "2h 25m"
-    },
-    {
-        airline: "Vietnam Airlines",
-        logo: "/images/vna.png",
-        departTime: "09:30",
-        arriveTime: "11:55",
-        duration: "2h 25m",
-        from: "Hà Nội (HAN)",
-        to: "TP HCM (SGN)",
-        duration: "2h 25m"
-    },
-    {
-        airline: "Vietjet Air",
-        logo: "/images/vietjet.png",
-        departTime: "13:20",
-        arriveTime: "15:40",
-        duration: "2h 20m",
-        from: "Hà Nội (HAN)",
-        to: "TP HCM (SGN)",
-        duration: "2h 25m"
-    },
-    {
-        airline: "Vietjet Air",
-        logo: "/images/vietjet.png",
-        departTime: "13:20",
-        arriveTime: "15:40",
-        duration: "2h 20m",
-        from: "Hà Nội (HAN)",
-        to: "TP HCM (SGN)",
-        duration: "2h 25m"
-    },
-    {
-        airline: "Vietjet Air",
-        logo: "/images/vietjet.png",
-        departTime: "13:20",
-        arriveTime: "15:40",
-        duration: "2h 20m",
-        from: "Hà Nội (HAN)",
-        to: "TP HCM (SGN)",
-        duration: "2h 25m"
-    }
-];
 function renderReturnFlights(flights) {
-    const container = document.querySelector(".return-section");
+    const container = document.getElementById("return-flight-cards-container");
     const template = document.getElementById("return-card-template");
 
     if (!container || !template) return;
 
+    container.innerHTML = "";
+
+    if (!flights.length) {
+        container.innerHTML = `
+            <div class="return-item-wrapper">
+                <div class="return-item">
+                    <div style="padding: 12px; color: #666; font-size: 13px;">
+                        Chưa có chuyến chiều về phù hợp.
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
     flights.forEach(flight => {
         const clone = template.content.cloneNode(true);
 
-        clone.querySelector(".return-logo").src = flight.logo;
-        clone.querySelector(".return-name").textContent = flight.airline;
+        const returnLogo = clone.querySelector(".return-logo");
+        const returnName = clone.querySelector(".return-name");
+        const returnTime = clone.querySelector(".return-time");
+        const returnArrive = clone.querySelector(".return-arrive");
+        const returnFrom = clone.querySelector(".return-from");
+        const returnTo = clone.querySelector(".return-to");
+        const returnDuration = clone.querySelector(".return-duration");
+        const returnDirect = clone.querySelector(".return-direct");
 
-        clone.querySelector(".return-time").textContent = flight.departTime;
-        clone.querySelector(".return-arrive").textContent = flight.arriveTime;
+        if (returnLogo) {
+            returnLogo.src = flight.logo || "";
+            returnLogo.alt = flight.airline || "";
+        }
 
-        clone.querySelector(".return-from").textContent = flight.from;
-        clone.querySelector(".return-to").textContent = flight.to;
-
-        clone.querySelector(".return-duration").textContent = flight.duration;
+        if (returnName) returnName.textContent = flight.airline || "";
+        if (returnTime) returnTime.textContent = flight.departTime || "";
+        if (returnArrive) returnArrive.textContent = flight.arriveTime || "";
+        if (returnFrom) returnFrom.textContent = flight.from || "";
+        if (returnTo) returnTo.textContent = flight.to || "";
+        if (returnDuration) returnDuration.textContent = flight.duration || "";
+        if (returnDirect) returnDirect.textContent = flight.direct || "Bay thẳng";
 
         container.appendChild(clone);
-
-
-
     });
 }
-document.addEventListener("DOMContentLoaded", () => {
-    renderFlights(mockFlights);
-    renderReturnFlights(mockReturnFlights);
-});
-//thời gian và giá tiền
-// mock data 
-document.addEventListener("DOMContentLoaded", () => {
+
+function initDateBarScroll() {
     const dateBar = document.querySelector(".departure-dates");
     if (!dateBar) return;
 
+    const track = dateBar.querySelector(".date-track");
     const prevBtn = dateBar.querySelector(".nav-arrow:first-child");
     const nextBtn = dateBar.querySelector(".nav-arrow:last-child");
 
-    // ===== MOCK DATA =====
-    const mockDatePrices = [
-        { date: "11 Th 10", price: 299000 },
-        { date: "12 Th 10", price: 329000 },
-        { date: "13 Th 10", price: 279000 },
-        { date: "14 Th 10", price: 299000 },
-        { date: "15 Th 10", price: 359000 },
-        { date: "16 Th 10", price: 399000 },
-        { date: "17 Th 10", price: 319000 },
-        { date: "18 Th 10", price: 289000 },
-    ];
+    if (!track) return;
 
-    // ===== TẠO TRACK =====
-    let track = document.createElement("div");
-    track.className = "date-track";
-
-    // clear date-item cũ
-    dateBar.querySelectorAll(".date-item").forEach(el => el.remove());
-
-    // render date
-    mockDatePrices.forEach((item, index) => {
-        const el = document.createElement("div");
-        el.className = "date-item" + (index === 3 ? " active" : "");
-        el.innerHTML = `
-            <div class="date">${item.date}</div>
-            <div class="price">${item.price.toLocaleString("vi-VN")} VND</div>
-        `;
-        track.appendChild(el);
-    });
-    dateBar.insertBefore(track, nextBtn);
-
-    const dateItems = track.querySelectorAll(".date-item");
-    let activeIndex = 3;
-
-    // date
-    dateItems.forEach((item, index) => {
-        item.addEventListener("click", () => setActive(index));
-    });
-
-    const itemWidth = dateItems[0].offsetWidth;
-
-    prevBtn.addEventListener("click", () => {
-        track.scrollLeft -= itemWidth * 2;
-    });
-
-    nextBtn.addEventListener("click", () => {
-        track.scrollLeft += itemWidth * 2;
-    });
-
-    function setActive(index) {
-        dateItems[activeIndex].classList.remove("active");
-        dateItems[index].classList.add("active");
-        activeIndex = index;
-
-        dateItems[index].scrollIntoView({
-            behavior: "smooth",
-            inline: "center",
-            block: "nearest"
+    if (prevBtn) {
+        prevBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            track.scrollBy({ left: -240, behavior: "smooth" });
         });
     }
-});
 
+    if (nextBtn) {
+        nextBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            track.scrollBy({ left: 240, behavior: "smooth" });
+        });
+    }
+}
 
-const date = dateItems[index].querySelector(".date")?.textContent;
-const price = dateItems[index].querySelector(".price")?.textContent;
-
-console.log("Selected date:", date, price);
-// chuyển tab chi tiết vé
 function initFlightCardTabs(card) {
     if (!card) return;
 
@@ -379,45 +347,35 @@ function initFlightCardTabs(card) {
 
     card.classList.add("collapsed");
 
-    header.addEventListener("click", (e) => {
-        if (e.target.closest(".btn-book")) return;
-
-        card.classList.toggle("collapsed");
-    });
+    if (header) {
+        header.addEventListener("click", (e) => {
+            if (e.target.closest(".btn-book")) return;
+            card.classList.toggle("collapsed");
+        });
+    }
 
     tabLinks.forEach(tab => {
         tab.addEventListener("click", () => {
             const target = tab.dataset.tab;
-            const isCollapsed = card.classList.contains("collapsed");
 
+            card.classList.remove("collapsed");
 
-            if (!isCollapsed) {
-                card.classList.remove("collapsed");
+            tabLinks.forEach(t => t.classList.remove("active"));
+            tabContents.forEach(c => c.classList.remove("active"));
 
-                // reset
-                tabLinks.forEach(t => t.classList.remove("active"));
-                tabContents.forEach(c => c.classList.remove("active"));
+            tab.classList.add("active");
 
-                // active tab
-                tab.classList.add("active");
-                card.querySelector(`.tab-content[data-content="${target}"]`)
-                    .classList.add("active");
-            } else {
-                card.classList.add("collapsed");
+            const targetContent = card.querySelector(`.tab-content[data-content="${target}"]`);
+            if (targetContent) {
+                targetContent.classList.add("active");
             }
-            return;
         });
     });
 }
 
-// chuyến về form vé máy bay
-document.addEventListener("click", function (e) {
-    const link = e.target.closest(".menu-link");
-
-    if (!link) return;
-
-    if (link.textContent.trim() === "Vé máy bay") {
-        e.preventDefault();
-        window.location.href = "/";
-    }
-}); 
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("departureFlightsData:", departureFlightsData);
+    renderFlights(departureFlightsData);
+    renderReturnFlights(returnFlightsData);
+    initDateBarScroll();
+});

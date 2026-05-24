@@ -41,6 +41,11 @@ class AuthController extends Controller
             ]);
         }
 
+        // 🔥 ĐÃ FIX CỐT LÕI: Đăng nhập User vào hệ thống Auth của Laravel trước 
+        // để Spatie có thực thể liên kết (Tránh lỗi Call to a member function on null)
+        \Illuminate\Support\Facades\Auth::login($user);
+
+        // Kiểm tra quyền hạn của User vừa nạp qua Auth
         if (! $user->hasAnyPermission([
             'users.view',
             'news.view',
@@ -48,12 +53,14 @@ class AuthController extends Controller
             'roles.view',
             'footer.view',
         ])) {
+            // Nếu không có quyền thì logout ra ngay
+            \Illuminate\Support\Facades\Auth::logout();
             return back()->withErrors([
                 'login' => 'Bạn không có quyền vào admin'
             ]);
         }
 
-        // Đăng nhập admin
+        // Đăng nhập admin session thủ công (Giữ nguyên logic cũ của bạn)
         session([
             'admin' => true,
             'admin_id' => $user->id

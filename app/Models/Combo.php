@@ -24,6 +24,10 @@ class Combo extends Model
         'status',
     ];
 
+    protected $casts = [
+        'content_image' => 'array',
+    ];
+
     public function departures()
     {
         return $this->hasMany(\App\Models\ComboDeparture::class);
@@ -34,5 +38,10 @@ class Combo extends Model
         return $this->hasMany(\App\Models\ComboImage::class)
             ->orderBy('sort_order')
             ->orderBy('id');
+    }
+    public function discountCodes()
+    {
+        return $this->hasMany(\App\Models\DiscountCode::class)
+            ->orderByDesc('id');
     }
 }
