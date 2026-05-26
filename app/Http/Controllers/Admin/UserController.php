@@ -14,11 +14,13 @@ class UserController extends Controller
         protected UserService $userService
     ) {}
 
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
-        $users = $this->userService->getAllUsers();
+        $filters = $request->only(['id', 'keyword']);
 
-        return view('admin.users.index', compact('users'));
+        $users = $this->userService->getAllUsers($filters);
+
+        return view('admin.users.index', compact('users', 'filters'));
     }
 
     public function create()
@@ -54,11 +56,11 @@ class UserController extends Controller
             ->with('success', 'Cập nhật thành công');
     }
 
-    public function destroy(User $user)
+    public function destroy(\Illuminate\Http\Request $request, User $user)
     {
         $this->userService->deleteUser($user);
 
-        if (request()->is('api/*')) {
+        if ($request->is('api/*')) {
             return response()->json([
                 'data' => null,
                 'message' => 'User deleted successfully',

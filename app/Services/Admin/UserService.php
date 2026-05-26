@@ -10,9 +10,25 @@ use Spatie\Permission\PermissionRegistrar;
 
 class UserService
 {
-    public function getAllUsers()
+
+
+    
+    public function getAllUsers(array $filters = [])
     {
-        return User::latest()->get();
+        return User::query()
+            
+            ->when(!empty($filters['id']), function ($query) use ($filters) {
+                $query->where('id', $filters['id']);
+            })
+            ->when(!empty($filters['keyword']), function ($query) use ($filters) {
+                $query->where(function ($q) use ($filters) {
+                    $q->where('name', 'like', '%' . $filters['keyword'] . '%')
+                        ->orWhere('email', 'like', '%' . $filters['keyword'] . '%')
+                        ->orWhere('phone', 'like', '%' . $filters['keyword'] . '%');
+                });
+            })
+            ->latest()
+            ->get();
     }
 
     public function getRoleNames()

@@ -33,9 +33,12 @@
             </div>
 
             <div class="form-group">
-                <label>Email</label>
-                <input type="email" name="email" class="form-control"
-                    value="{{ old('email') }}">
+                <label>Email <span class="text-danger">*</span></label>
+                <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $user->email ?? '') }}" required>
+
+                @error('email')
+                <span class="text-danger mt-1 d-block"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>
+                @enderror
             </div>
 
             <div class="form-group">
@@ -44,15 +47,20 @@
             </div>
             @can('roles.edit')
             <div class="form-group">
-                <label>Role</label>
-                <select name="role" class="form-control">
-                    <option value="">-- Không gán role --</option>
+                <label>Role <span class="text-danger">*</span></label>
+
+                <select name="role" class="form-control @error('role') is-invalid @enderror" required>
+                    <option value="">-- Chọn vai trò (Bắt buộc) --</option>
                     @foreach($roles as $role)
                     <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>
                         {{ $role }}
                     </option>
                     @endforeach
                 </select>
+
+                @error('role')
+                <span class="text-danger mt-1 d-block"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>
+                @enderror
             </div>
             @endcan
 
