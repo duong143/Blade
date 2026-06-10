@@ -28,6 +28,7 @@ class ComboBooking extends Model
         'contact_name',
         'contact_phone',
         'contact_email',
+        'customer_note',
         'invoice_required',
         'invoice_tax',
         'invoice_company',
@@ -38,6 +39,7 @@ class ComboBooking extends Model
         'payment_status',
         'payment_expired_at',
         'paid_at',
+        'invoice_sent_at',
         'booking_status',
     ];
 
@@ -59,6 +61,7 @@ class ComboBooking extends Model
         'travel_end_date' => 'date',
         'payment_expired_at' => 'datetime',
         'paid_at' => 'datetime',
+        'invoice_sent_at' => 'datetime',
     ];
 
     public function combo()

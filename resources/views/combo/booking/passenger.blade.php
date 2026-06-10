@@ -144,8 +144,68 @@ $payableAmount = $totalAmount;
                         </div>
                     </div>
 
+                    {{-- PASSENGER NOTE --}}
+                    <div class="bg-white rounded-3 shadow-sm p-4 mt-3">
 
-                    {{-- INVOICE --}}
+                        <h6 class="fw-semibold mb-3">Thông tin bổ sung</h6>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">
+                                    Giới tính
+                                </label>
+
+                                <select name="contact_gender" class="form-control">
+                                    <option value="">Chọn giới tính</option>
+                                    <option value="male">Nam</option>
+                                    <option value="female">Nữ</option>
+                                    <option value="other">Khác</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">
+                                    Ngày sinh
+                                </label>
+
+                                <input
+                                    type="date"
+                                    name="contact_birthdate"
+                                    class="form-control">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">
+                                    Thời gian liên hệ phù hợp
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="preferred_contact_time"
+                                    class="form-control"
+                                    placeholder="VD: 8h - 17h">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label small text-muted">
+                                    Ghi chú yêu cầu
+                                </label>
+
+                                <textarea
+                                    name="customer_note"
+                                    class="form-control"
+                                    rows="4"
+                                    placeholder="Nhập yêu cầu đặc biệt nếu có, ví dụ: phòng gần nhau, ăn chay, có trẻ nhỏ, người lớn tuổi..."></textarea>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    
+
+
+                    <!-- {{-- INVOICE --}}
                     <div class="bg-white rounded-3 shadow-sm p-4 mt-3">
 
                         <h6 class="fw-bold mb-2">Xuất hóa đơn</h6>
@@ -220,7 +280,9 @@ $payableAmount = $totalAmount;
 
                         </div>
 
-                    </div>
+                    </div> -->
+
+
 
 
                     {{-- BUTTON --}}

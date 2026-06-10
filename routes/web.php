@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
@@ -11,6 +13,7 @@ use App\Http\Controllers\HomeController;
 use App\Models\Combo;
 use App\Models\ComboBooking;
 use App\Models\DiscountCode;
+use App\Mail\BookingInvoiceMail;
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
@@ -1065,7 +1068,9 @@ Route::prefix('combo')->group(function () {
             'booking_id' => ['required', 'integer', 'exists:combo_bookings,id'],
         ]);
 
-        $booking = ComboBooking::query()->findOrFail((int) $validated['booking_id']);
+        $booking = ComboBooking::query()
+            ->with('combo')
+            ->findOrFail((int) $validated['booking_id']);
 
         if (
             $booking->payment_status === 'expired' ||
@@ -1082,11 +1087,46 @@ Route::prefix('combo')->group(function () {
             'paid_at' => now(),
         ]);
 
+        $booking->refresh()->loadMissing('combo');
+
+        if (
+            $booking->payment_status === 'paid' &&
+            !empty($booking->contact_email) &&
+            is_null($booking->invoice_sent_at)
+        ) {
+            try {
+                Mail::to($booking->contact_email)
+                    ->send(new BookingInvoiceMail($booking));
+
+                $booking->update([
+                    'invoice_sent_at' => now(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Gửi hóa đơn PDF thất bại cho đơn combo #' . $booking->id . ': ' . $e->getMessage());
+            }
+        }
+
         return redirect()->route('combo.index')
             ->with('success', 'Thanh toán thành công.');
     })->name('combo.payment.complete');
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Combo Payment Auto-Check (AJAX Polling)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/kiem-tra-trang-thai-thanh-toan/{id}', function ($id) {
+        $booking = ComboBooking::find($id);
+
+        if (!$booking) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        return response()->json([
+            'payment_status' => $booking->payment_status
+        ]);
+    })->name('combo.payment.check-status');
     /*
     |--------------------------------------------------------------------------
     | Combo Detail
@@ -1258,3 +1298,50 @@ Route::post('lien-he', [App\Http\Controllers\ContactController::class, 'store'])
 
 //     return view('flight-booking-success', compact('booking'));
 // })->name('flight.booking.success');
+
+
+
+
+// luồng giữ lại để test nhanh khi cần 
+
+// Route::get('/dev/sepay-paid/{booking}', function (ComboBooking $booking) {
+//     abort_unless(app()->environment('local'), 403);
+
+//     if (
+//         $booking->payment_status === 'expired' ||
+//         ($booking->payment_expired_at && now()->greaterThan($booking->payment_expired_at))
+//     ) {
+//         return redirect()->route('combo.index')
+//             ->withErrors([
+//                 'payment' => 'Đơn hàng đã hết thời gian thanh toán.',
+//             ]);
+//     }
+
+//     $booking->update([
+//         'payment_status' => 'paid',
+//         'booking_status' => 'confirmed',
+//         'paid_at' => now(),
+//     ]);
+
+//     $booking->refresh()->loadMissing('combo');
+
+//     if (
+//         $booking->payment_status === 'paid' &&
+//         !empty($booking->contact_email) &&
+//         is_null($booking->invoice_sent_at)
+//     ) {
+//         try {
+//             Mail::to($booking->contact_email)
+//                 ->send(new BookingInvoiceMail($booking));
+
+//             $booking->update([
+//                 'invoice_sent_at' => now(),
+//             ]);
+//         } catch (\Throwable $e) {
+//             Log::error('Gửi hóa đơn PDF thất bại cho đơn combo #' . $booking->id . ': ' . $e->getMessage());
+//         }
+//     }
+
+//     return redirect()->route('combo.index')
+//         ->with('success', 'Thanh toán thành công. Hóa đơn PDF đã được gửi về email khách hàng.');
+// });

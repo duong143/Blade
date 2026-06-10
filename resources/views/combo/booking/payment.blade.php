@@ -311,47 +311,41 @@ $shouldShowQrModal = !$isExpired && !$isPaid && !empty($booking->payment_method)
         </div>
 
         @if(!$isExpired && !$isPaid && $booking->payment_method)
-            @php
-                // TÍCH HỢP SEPAY VIETQR ĐỘNG
-                $BANK_ID = "TPB"; // Mã chuẩn của ngân hàng TPBank
-                $ACCOUNT_NO = "20041432004"; // Số tài khoản thật của bạn
-                $TEMPLATE = "qr_only"; 
-                $AMOUNT = $booking->final_amount; 
-                $DESCRIPTION = $booking->booking_code; 
+        @php
+        // TÍCH HỢP SEPAY VIETQR ĐỘNG
+        $BANK_ID = "TPB"; // Mã chuẩn của ngân hàng TPBank
+        $ACCOUNT_NO = "20041432004"; // Số tài khoản thật của bạn
+        $TEMPLATE = "qr_only";
+        $AMOUNT = $booking->final_amount;
+        $DESCRIPTION = $booking->booking_code;
 
-                $vietQrUrl = "https://img.vietqr.io/image/{$BANK_ID}-{$ACCOUNT_NO}-{$TEMPLATE}.png?amount={$AMOUNT}&addInfo={$DESCRIPTION}";
-            @endphp
+        $vietQrUrl = "https://img.vietqr.io/image/{$BANK_ID}-{$ACCOUNT_NO}-{$TEMPLATE}.png?amount={$AMOUNT}&addInfo={$DESCRIPTION}";
+        @endphp
 
-            <div class="payment-qr-modal__qr" style="text-align: center;">
-                <div style="display: inline-block; padding: 10px; background: #fff; border: 1px solid #e6e8ee; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 12px;">
-                    <img src="{{ $vietQrUrl }}" alt="QR thanh toán tự động qua SePay">
-                </div>
-                
-                <div style="background: #fff3cd; border: 1px solid #ffeeba; color: #856404; font-size: 14px; border-radius: 8px; padding: 10px 14px; text-align: left; margin: 0 auto 16px; max-width: 440px; line-height: 1.5;">
-                    <strong>⚠️ Lưu ý quan trọng khi quét mã:</strong>
-                    <ul style="margin: 4px 0 0; padding-left: 18px;">
-                        <li>Giữ nguyên nội dung chuyển khoản mặc định là: <strong style="color: #c0392b;">{{ $booking->booking_code }}</strong></li>
-                        <li>Đơn hàng sẽ tự động chuyển trạng thái ngay khi tài khoản ngân hàng của bạn báo nhận được tiền thành công.</li>
-                    </ul>
-                </div>
+        <div class="payment-qr-modal__qr" style="text-align: center;">
+            <div style="display: inline-block; padding: 10px; background: #fff; border: 1px solid #e6e8ee; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                <img src="{{ $vietQrUrl }}" alt="QR thanh toán tự động qua SePay">
             </div>
 
-            <form method="POST" action="{{ route('combo.payment.complete') }}" class="payment-qr-modal__form">
-                @csrf
-                <input type="hidden" name="booking_id" value="{{ $booking->id }}">
+            <div style="background: #fff3cd; border: 1px solid #ffeeba; color: #856404; font-size: 14px; border-radius: 8px; padding: 10px 14px; text-align: left; margin: 0 auto 16px; max-width: 440px; line-height: 1.5;">
+                <strong>⚠️ Lưu ý quan trọng khi quét mã:</strong>
+                <ul style="margin: 4px 0 0; padding-left: 18px;">
+                    <li>Giữ nguyên nội dung chuyển khoản mặc định là: <strong style="color: #c0392b;">{{ $booking->booking_code }}</strong></li>
+                    <li>Đơn hàng sẽ tự động chuyển trạng thái ngay khi tài khoản ngân hàng của bạn báo nhận được tiền thành công.</li>
+                </ul>
+            </div>
+        </div>
 
-                <button type="submit" class="payment-qr-modal__submit">
-                    Tôi đã thanh toán / Hoàn thành
-                </button>
-            </form>
+        {{-- 🔥 Đã XÓA thẻ form chứa nút bấm "Tôi đã thanh toán" theo ý bạn --}}
+
         @elseif($isPaid)
-            <div class="alert alert-success mt-3 mb-0">
-                Đơn hàng đã được ghi nhận thanh toán thành công.
-            </div>
+        <div class="alert alert-success mt-3 mb-0">
+            Đơn hàng đã được ghi nhận thanh toán thành công.
+        </div>
         @elseif($isExpired)
-            <div class="alert alert-danger mt-3 mb-0">
-                Đơn hàng đã hết thời gian thanh toán.
-            </div>
+        <div class="alert alert-danger mt-3 mb-0">
+            Đơn hàng đã hết thời gian thanh toán.
+        </div>
         @endif
     </div>
 </div>
@@ -418,6 +412,33 @@ $shouldShowQrModal = !$isExpired && !$isPaid && !empty($booking->payment_method)
         if (qrOverlay) {
             qrOverlay.addEventListener('click', closeQrModal);
         }
+
+        
+        
+        //  AUTO-CHECK PAYMENT STATUS (POLLING TỰ ĐỘNG CHUYỂN TRANG)
+        
+        const bookingId = "{{ $booking->id }}";
+        const checkStatusUrl = "{{ url('combo/kiem-tra-trang-thai-thanh-toan') }}/" + bookingId;
+
+       
+        const paymentCheckInterval = setInterval(function() {
+            fetch(checkStatusUrl)
+                .then(response => response.json())
+                .then(data => {
+                   
+                    if (data && data.payment_status === 'paid') {
+                      
+                        clearInterval(paymentCheckInterval);
+
+                       
+                        closeQrModal();
+
+                
+                        window.location.href = "{{ route('combo.index') }}";
+                    }
+                })
+                .catch(error => console.error('Lỗi khi kiểm tra thanh toán:', error));
+        }, 3000);
     });
 </script>
 @endsection

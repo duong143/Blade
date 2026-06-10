@@ -199,29 +199,29 @@
 
                         <div class="col-md-6 mb-3 d-flex align-items-center">
                             <div class="form-check mt-4">
-                                <input
+                                <!-- <input
                                     class="form-check-input"
                                     type="checkbox"
                                     name="invoice_required"
                                     value="1"
                                     id="invoice_required"
-                                    {{ old('invoice_required', $booking->invoice_required) ? 'checked' : '' }}>
-                                <label class="form-check-label" for="invoice_required">
+                                    {{ old('invoice_required', $booking->invoice_required) ? 'checked' : '' }}> -->
+                                <!-- <label class="form-check-label" for="invoice_required">
                                     Xuất hóa đơn
-                                </label>
+                                </label> -->
                             </div>
                         </div>
 
-                        <div class="col-md-6 mb-3">
+                        <!-- <div class="col-md-6 mb-3">
                             <label>Mã số thuế</label>
                             <input
                                 type="text"
                                 name="invoice_tax"
                                 class="form-control"
                                 value="{{ old('invoice_tax', $booking->invoice_tax) }}">
-                        </div>
+                        </div> -->
 
-                        <div class="col-md-6 mb-3">
+                        <!-- <div class="col-md-6 mb-3">
                             <label>Tên công ty</label>
                             <input
                                 type="text"
@@ -237,16 +237,16 @@
                                 name="invoice_address"
                                 class="form-control"
                                 value="{{ old('invoice_address', $booking->invoice_address) }}">
-                        </div>
+                        </div> -->
 
-                        <div class="col-md-6 mb-3">
+                        <!-- <div class="col-md-6 mb-3">
                             <label>Email hóa đơn</label>
                             <input
                                 type="email"
                                 name="invoice_email"
                                 class="form-control"
                                 value="{{ old('invoice_email', $booking->invoice_email) }}">
-                        </div>
+                        </div> -->
 
                         <div class="col-12">
                             <button type="submit" class="btn btn-warning">
@@ -491,7 +491,7 @@
             </div>
         </div>
 
-        <div class="card">
+        <!-- <div class="card">
             <div class="card-header">
                 <strong>Thông tin hóa đơn</strong>
             </div>
@@ -519,7 +519,7 @@
                     </tr>
                 </table>
             </div>
-        </div>
+        </div> -->
     </div>
 </div>
 @endsection
