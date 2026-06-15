@@ -66,6 +66,12 @@
                 ĐĂNG NHẬP
             </button>
 
+            <p class="forgot-password-link" style="text-align: center; margin-top: 12px;">
+                <a href="#" id="switchToForgotPassword">
+                    Quên mật khẩu?
+                </a>
+            </p>
+
             <p class="login-policy">
                 Với việc tiếp tục, tôi đồng ý đã đọc và chấp thuận
                 <a href="#">Điều khoản & điều kiện</a> và
@@ -97,14 +103,19 @@
                     <img src="https://flagcdn.com/w20/vn.png" alt="VN">
                     <span>+84</span>
                 </div>
-                <input type="text" placeholder="Số điện thoại">
+                <input type="text" name="register_phone" placeholder="Số điện thoại">
             </div>
+
             <div class="name-input">
-                <input type="text" placeholder="Họ và tên">
+                <input type="text" name="register_name" placeholder="Họ và tên">
+            </div>
+
+            <div class="email-input">
+                <input type="email" name="register_email" placeholder="Email">
             </div>
 
             <div class="password-input">
-                <input type="password" placeholder="Mật khẩu">
+                <input type="password" name="register_password" placeholder="Mật khẩu">
             </div>
             <button type="button" class="login-submit">
                 ĐĂNG KÝ
@@ -119,11 +130,39 @@
         </div>
     </div>
 
+    <!-- FORGOT PASSWORD MODAL -->
+    <div class="login-overlay" id="forgotPasswordModal">
+        <div class="login-modal">
+            <button class="login-close" id="closeForgotPasswordModal">×</button>
+
+            <h3 class="login-title">Quên mật khẩu</h3>
+
+            <p class="login-desc">
+                Nhập email đã đăng ký tài khoản. Hệ thống sẽ gửi liên kết đặt lại mật khẩu vào email của bạn.
+            </p>
+
+            <div class="email-input">
+                <input type="email"
+                    id="forgotPasswordEmail"
+                    placeholder="Email đã đăng ký">
+            </div>
+
+            <button type="button" class="login-submit" id="submitForgotPassword">
+                GỬI LINK ĐẶT LẠI MẬT KHẨU
+            </button>
+
+            <div class="login-footer" style="margin-top: 16px;">
+                Bạn đã nhớ mật khẩu?
+                <a href="#" id="backToLoginFromForgot">Đăng nhập</a>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ asset('js/home.js') }}"></script>
     <script src="{{ asset('js/login-modal.js') }}"></script>
     <script src="{{ asset('js/header.js') }}"></script>
 
-@stack('scripts')
+    @stack('scripts')
 </body>
 
 </html>

@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\SePayWebhookController;
 
+
 /*
 |--------------------------------------------------------------------------
 | DISABLED / COMMENTED IMPORTS
@@ -85,12 +86,24 @@ Route::post('/change-password', function (Request $request) {
     return response()->json(['success' => true]);
 });
 
+Route::get('/password/forgot', [\App\Http\Controllers\AuthController::class, 'showForgotPassword'])
+    ->name('customer.password.request');
+
+Route::post('/password/email', [\App\Http\Controllers\AuthController::class, 'sendResetLink'])
+    ->name('customer.password.email');
+
+Route::get('/password/reset/{token}', [\App\Http\Controllers\AuthController::class, 'showResetPassword'])
+    ->name('customer.password.reset');
+
+Route::post('/password/reset', [\App\Http\Controllers\AuthController::class, 'resetPassword'])
+    ->name('customer.password.update');
+
 
 /*
 |--------------------------------------------------------------------------
 | ADMIN AUTH
 |--------------------------------------------------------------------------
-| Không dùng middleware admin.
+|
 |--------------------------------------------------------------------------
 */
 
@@ -103,7 +116,17 @@ Route::post('/admin/login', [AdminAuthController::class, 'login'])
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
     ->name('admin.logout');
 
+Route::get('/admin/password/forgot', [AdminAuthController::class, 'showForgotPassword'])
+    ->name('admin.password.request');
 
+Route::post('/admin/password/email', [AdminAuthController::class, 'sendResetLink'])
+    ->name('admin.password.email');
+
+Route::get('/admin/password/reset/{token}', [AdminAuthController::class, 'showResetPassword'])
+    ->name('admin.password.reset');
+
+Route::post('/admin/password/reset', [AdminAuthController::class, 'resetPassword'])
+    ->name('admin.password.update');
 /*
 |--------------------------------------------------------------------------
 | ADMIN PANEL - CORE
@@ -1167,6 +1190,12 @@ Route::get('lien-he', [App\Http\Controllers\ContactController::class, 'index'])-
 
 // Xử lý khi khách nhấn nút "Gửi tin nhắn"
 Route::post('lien-he', [App\Http\Controllers\ContactController::class, 'store'])->name('contact.store');
+
+
+
+
+
+
 
 /*
 |--------------------------------------------------------------------------

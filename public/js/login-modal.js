@@ -116,7 +116,79 @@ document.addEventListener("DOMContentLoaded", function () {
                 .catch(() => alert("Có lỗi xảy ra"));
         }
 
+        // ===== SWITCH TO FORGOT PASSWORD =====
+        if (e.target.id === "switchToForgotPassword") {
+            e.preventDefault();
+            loginModal?.classList.remove("active");
+            document.getElementById("forgotPasswordModal")?.classList.add("active");
+        }
 
+        // ===== CLOSE FORGOT PASSWORD MODAL =====
+        if (e.target.id === "closeForgotPasswordModal") {
+            document.getElementById("forgotPasswordModal")?.classList.remove("active");
+        }
+
+        // ===== BACK TO LOGIN FROM FORGOT =====
+        if (e.target.id === "backToLoginFromForgot") {
+            e.preventDefault();
+            document.getElementById("forgotPasswordModal")?.classList.remove("active");
+            loginModal?.classList.add("active");
+        }
+
+        // ===== SUBMIT FORGOT PASSWORD =====
+        if (e.target.id === "submitForgotPassword") {
+            const email = document.getElementById("forgotPasswordEmail")?.value.trim();
+
+            if (!email) {
+                alert("Vui lòng nhập email");
+                return;
+            }
+
+            fetch("/password/email", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": document
+                        .querySelector('meta[name="csrf-token"]')
+                        .content
+                },
+                body: JSON.stringify({ email })
+            })
+                .then(async r => {
+                    const data = await r.json();
+
+                    if (!r.ok) {
+                        let message = data.message || "Gửi link thất bại";
+
+                        if (data.errors) {
+                            message = Object.values(data.errors)[0][0];
+                        }
+
+                        throw new Error(message);
+                    }
+
+                    return data;
+                })
+                .then(res => {
+                    if (res.success) {
+                        alert(res.message || "Link đặt lại mật khẩu đã được gửi vào email của bạn.");
+
+                        document.getElementById("forgotPasswordEmail").value = "";
+
+                        document
+                            .getElementById("forgotPasswordModal")
+                            ?.classList.remove("active");
+
+                        loginModal?.classList.add("active");
+                    } else {
+                        alert(res.message || "Gửi link thất bại");
+                    }
+                })
+                .catch(error => {
+                    alert(error.message || "Có lỗi xảy ra");
+                });
+        }
     });
 
     // ===== LOGIN SUBMIT =====
@@ -159,11 +231,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 "#registerModal .name-input input"
             )?.value.trim();
 
+            const email = document.querySelector(
+                "#registerModal .email-input input"
+            )?.value.trim();
+
             const password = document.querySelector(
                 "#registerModal .password-input input"
             )?.value.trim();
 
-            if (!phone || !name || !password) {
+            if (!phone || !name || !email || !password) {
                 alert("Vui lòng nhập đủ thông tin");
                 return;
             }
@@ -176,7 +252,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         .querySelector('meta[name="csrf-token"]')
                         .content
                 },
-                body: JSON.stringify({ phone, name, password })
+                body: JSON.stringify({ phone, name, email, password })
             })
                 .then(r => r.json())
                 .then(res => {

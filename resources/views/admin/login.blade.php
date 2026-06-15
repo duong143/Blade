@@ -25,11 +25,18 @@
 
                 <p class="login-box-msg">Đăng nhập quản trị</p>
 
+                {{-- Hiển thị thông báo thành công --}}
+                @if (session('success'))
+                    <div class="alert alert-success">
+                        {{ session('success') }}
+                    </div>
+                @endif
+
                 {{-- Hiển thị lỗi --}}
                 @if ($errors->any())
-                <div class="alert alert-danger">
-                    {{ $errors->first() }}
-                </div>
+                    <div class="alert alert-danger">
+                        {{ $errors->first() }}
+                    </div>
                 @endif
 
                 <form action="/admin/login" method="POST">
@@ -38,11 +45,12 @@
                     {{-- Tài khoản --}}
                     <div class="input-group mb-3">
                         <input type="text"
-                            name="login"
-                            class="form-control"
-                            placeholder="Email hoặc số điện thoại"
-                            value="{{ old('login') }}"
-                            required>
+                               name="login"
+                               class="form-control"
+                               placeholder="Email hoặc số điện thoại"
+                               value="{{ old('login') }}"
+                               required>
+
                         <div class="input-group-append">
                             <div class="input-group-text">
                                 <span class="fas fa-user"></span>
@@ -53,10 +61,11 @@
                     {{-- Mật khẩu --}}
                     <div class="input-group mb-3">
                         <input type="password"
-                            name="password"
-                            class="form-control"
-                            placeholder="Mật khẩu"
-                            required>
+                               name="password"
+                               class="form-control"
+                               placeholder="Mật khẩu"
+                               required>
+
                         <div class="input-group-append">
                             <div class="input-group-text">
                                 <span class="fas fa-lock"></span>
@@ -67,12 +76,18 @@
                     <div class="row">
                         <div class="col-12">
                             <button type="submit"
-                                class="btn btn-primary btn-block">
+                                    class="btn btn-primary btn-block">
                                 Đăng nhập
                             </button>
                         </div>
                     </div>
                 </form>
+
+                <p class="mt-3 mb-0 text-center">
+                    <a href="{{ route('admin.password.request') }}">
+                        Quên mật khẩu?
+                    </a>
+                </p>
 
             </div>
         </div>
